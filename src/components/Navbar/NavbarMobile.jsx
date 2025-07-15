@@ -32,31 +32,12 @@ export default function NavbarMobile() {
   // URLs para as opções, seguindo o desktop (adicione/ajuste conforme necessidade)
   const urls = {
     cadastros: [
-      { url: 'cadastros/bens', label: 'Bens' },
-      { url: 'cadastros/centro_custos', label: 'Centro de Custos' },
-      { url: 'cadastros/centro_lucros', label: 'Centro de Lucros' },
-      { url: 'cadastros/cliente_fornecedor', label: 'Clientes / Fornecedores' },
-      { url: 'cadastros/funcionarios', label: 'Funcionários' },
-      { url: 'cadastros/insumos', label: 'Insumos' },
-      { url: 'cadastros/taxas', label: 'Taxas' },
-      { url: 'cadastros/unidade_negocio', label: 'Unidade de Negócios' },
-    ],
-    despesas: [
-      { url: '/despesas/insumos', label: 'Insumos' },
-      { url: '/despesas/pagamento_funcionario', label: 'Pagamentos de Funcionários' },
-    ],
-    receitas: [
-      { url: '/receitas/produtos', label: 'Produtos' },
-    ],
-    relatorios: [
-      { url: '/relatorios/demonstracao_resultado', label: 'Demonstração do Resultado' },
-      { url: '/relatorios/resumo_despesa', label: 'Resumo de Despesas' },
-      { url: '/relatorios/resumo_receita', label: 'Resumo de Receitas' },
-    ],
-    configuracoes: [
-      { url: '/system/enderecos', label: 'Endereços' },
+      { url: 'cadastros/empresas', label: 'Empresas' },
+      { url: 'cadastros/sistemas', label: 'Sistemas' },
+      { url: 'cadastros/grupos', label: 'Grupos' },
     ],
     usuario: [
+      { url: '/system/enderecos', label: 'Endereços' },
       { url: '/perfil', label: 'Perfil' },
       { url: '/sair', label: 'Sair' },
     ],
@@ -75,30 +56,6 @@ export default function NavbarMobile() {
       options: urls.cadastros,
     },
     {
-      id: 'despesas',
-      label: 'Lançamento Despesa',
-      icon: <FaCartShopping />,
-      options: urls.despesas,
-    },
-    {
-      id: 'receitas',
-      label: 'Lançamento Receita',
-      icon: <FaGift />,
-      options: urls.receitas,
-    },
-    {
-      id: 'relatorios',
-      label: 'Relatórios Gerenciais',
-      icon: <MdInsertChartOutlined />,
-      options: urls.relatorios,
-    },
-    {
-      id: 'configuracoes',
-      label: 'Configurações',
-      icon: <FaCog />,
-      options: urls.configuracoes,
-    },
-    {
       id: 'usuario',
       label: 'victorseraphin@gmail.com',
       icon: <FaUser />,
@@ -107,7 +64,7 @@ export default function NavbarMobile() {
   ];
 
   return (
-    <div className="md:hidden bg-emerald-500 text-white">
+    <div className="md:hidden bg-sky-700 text-white">
       <div className="p-4 flex justify-between items-center">
         <span className="text-lg font-bold">NavAgro</span>
         <button
@@ -135,7 +92,7 @@ export default function NavbarMobile() {
                     setOpenSubmenu(null);
                   }}
                   className={`flex items-center gap-2 px-4 py-3 border-t border-gray-200 text-sm font-medium hover:bg-gray-100
-                    ${active === id ? 'bg-emerald-100 text-emerald-700' : ''}`}
+                    ${active === id ? 'bg-sky-100 text-sky-700' : ''}`}
                 >
                   <span className="text-xl">{icon}</span>
                   {label}
@@ -145,7 +102,7 @@ export default function NavbarMobile() {
                   <button
                     onClick={() => handleToggle(id)}
                     className={`flex justify-between items-center w-full px-4 py-3 border-t border-gray-200 text-sm font-medium hover:bg-gray-100
-                      ${active === id ? 'bg-emerald-100 text-emerald-700' : ''}`}
+                      ${active === id ? 'bg-sky-100 text-sky-700' : ''}`}
                     aria-expanded={openSubmenu === id}
                     aria-haspopup="true"
                   >
@@ -169,7 +126,7 @@ export default function NavbarMobile() {
                               setOpenSubmenu(null);
                               setActive(id);
                             }}
-                            className="block hover:text-emerald-600"
+                            className="block hover:text-sky-600"
                           >
                             {optionLabel}
                           </Link>

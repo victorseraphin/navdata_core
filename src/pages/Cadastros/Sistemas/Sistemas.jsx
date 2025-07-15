@@ -1,13 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
-import FormBem from "./FormBem";
+import FormSistemas from "./FormSistemas";
 import axios from "../../../api/axios";
 import API_URL from "../../../config";
 
 
-export default function BensPage() {
+export default function SistemasPage() {
     const [dados, setDados] = useState([]);
-    const [filtroDescricao, setFiltroDescricao] = useState("");
-    const [criterioAlocacao, setCriterioAlocacao] = useState("");
+    const [filtroNome, setFiltroNome] = useState("");
+    const [documento, setDocumento] = useState("");
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [paginaAtual, setPaginaAtual] = useState(1);
     const [carregando, setCarregando] = useState(false); // ← ADICIONE ESTA LINHA
@@ -19,23 +19,21 @@ export default function BensPage() {
 
         try {
             const params = {};
-            if (filtroDescricao) params.descricao = filtroDescricao;
+            if (filtroNome) params.nome = filtroNome;
 
-            const response = await axios.get(`${API_URL}/v1/cadastros/bens`, { params });
+            const response = await axios.get(`${API_URL}/v1/cadastros/sistemas/consulta`, { params });
 
             const dadosConvertidos = response.data
                 .filter((item) => !item.deletedAt)
                 .map((item) => ({
                     id: item.id,
-                    descricao: item.descricao,
-                    criterio: item.unidade,
-                    valor: item.valorNovo,
+                    nome: item.nome,
                 }));
 
             setDados(dadosConvertidos);
             setPaginaAtual(1);
         } catch (err) {
-            setErro(err.response?.data?.message || err.message || "Erro ao buscar bens");
+            setErro(err.response?.data?.message || err.message || "Erro ao buscar sistemas");
         } finally {
             setCarregando(false);
         }
@@ -48,10 +46,10 @@ export default function BensPage() {
     // Filtra dados pela descrição e critério de alocação (se usar)
     const dadosFiltrados = useMemo(() => {
         return dados.filter((b) =>
-            b.descricao.toLowerCase().includes(filtroDescricao.toLowerCase())
+            b.nome.toLowerCase().includes(filtroNome.toLowerCase())
             // Aqui você pode incluir filtro pelo critérioAlocacao, se fizer sentido no seu domínio
         );
-    }, [dados, filtroDescricao]);
+    }, [dados, filtroNome]);
 
     const totalPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina);
     const dadosPaginaAtual = dadosFiltrados.slice(
@@ -140,37 +138,22 @@ export default function BensPage() {
         <div className="p-4 px-8 max-w-full mx-auto">
             {/* Filtros */}
             <div className="mb-6 border border-gray-300 rounded bg-gray-50 p-4 shadow-sm">
-                <h2 className="font-semibold text-xl mb-4 text-gray-700">Bens</h2>
+                <h2 className="font-semibold text-xl mb-4 text-gray-700">Sistemas</h2>
 
                 {/* Cada input em sua linha */}
                 <div className="flex flex-col gap-4 w-full">
                     {/* Linha 1 - Descrição (col-4) */}
                     <div className="w-full lg:w-1/3">
-                        <label htmlFor="descricao" className="block text-sm font-medium text-gray-600 mb-1">
-                            Descrição
+                        <label htmlFor="nome" className="block text-sm font-medium text-gray-600 mb-1">
+                            Nome
                         </label>
                         <input
-                            id="descricao"
+                            id="nome"
                             type="text"
-                            placeholder="Descrição"
+                            placeholder="Nome"
                             className="border border-gray-300 rounded px-3 py-0.5 focus:outline-none focus:ring-2 focus:ring-emerald-400 w-full"
-                            value={filtroDescricao}
-                            onChange={(e) => setFiltroDescricao(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Linha 2 - Critério (col-2) */}
-                    <div className="w-full lg:w-1/6">
-                        <label htmlFor="criterio" className="block text-sm font-medium text-gray-600 mb-1">
-                            Critério
-                        </label>
-                        <input
-                            id="criterio"
-                            type="text"
-                            placeholder="Critério"
-                            className="border border-gray-300 rounded px-3 py-0.5 focus:outline-none focus:ring-2 focus:ring-emerald-400 w-full"
-                            value={filtroDescricao}
-                            onChange={(e) => setFiltroDescricao(e.target.value)}
+                            value={filtroNome}
+                            onChange={(e) => setFiltroNome(e.target.value)}
                         />
                     </div>
                 </div>
@@ -210,20 +193,6 @@ export default function BensPage() {
                 >
                     Excluir
                 </button>
-                <button
-                    onClick={handleRateio}
-                    disabled={selectedIds.size !== 1}
-                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-emerald-500 transition disabled:opacity-50"
-                >
-                    Rateio
-                </button>
-                <button
-                    onClick={handleDepreciacao}
-                    disabled={selectedIds.size !== 1}
-                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-emerald-500 transition disabled:opacity-50"
-                >
-                    Depreciação
-                </button>
             </div>
 
             {/* Tabela */}
@@ -247,10 +216,7 @@ export default function BensPage() {
                                     onChange={selecionarTodos}
                                 />
                             </th>
-                            <th className="p-3 text-left font-semibold">Descrição</th>
-                            <th className="p-3 text-left font-semibold">Critério</th>
-                            <th className="p-3 text-left font-semibold">Valor Novo</th>
-                            <th className="p-3 text-left font-semibold">Valor Sucata</th>
+                            <th className="p-3 text-left font-semibold">Nome</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -262,7 +228,7 @@ export default function BensPage() {
                             </tr>
                         )}
 
-                        {dadosPaginaAtual.map(({ id, descricao, criterio, valor_novo, valor_sucata }) => (
+                        {dadosPaginaAtual.map(({ id, nome, status }) => (
                             <tr
 
                                 key={id}
@@ -277,20 +243,7 @@ export default function BensPage() {
                                         onChange={() => toggleSelecionado(id)}
                                     />
                                 </td>
-                                <td className="p-3">{descricao}</td>
-                                <td className="p-3">{criterio}</td>
-                                <td className="p-3">
-                                    {valor_novo.toLocaleString("pt-BR", {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
-                                </td>
-                                <td className="p-3">
-                                    {valor_sucata.toLocaleString("pt-BR", {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
-                                </td>
+                                <td className="p-3">{nome}</td>                      
                             </tr>
                         ))}
                     </tbody>
@@ -318,7 +271,7 @@ export default function BensPage() {
                 </button>
             </div>
             {exibindoFormulario && (
-                <FormBem
+                <FormSistemas
                     onSalvar={salvarFormulario}
                     onCancelar={cancelarModal}
                     registro={registroEditando} // ← importante

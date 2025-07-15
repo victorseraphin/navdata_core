@@ -19,7 +19,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center bg-gray-50">
+    <div className="flex items-center justify-center bg-blue-400">
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-md shadow-md w-full max-w-sm"
@@ -45,7 +45,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-emerald-600 text-white w-full py-3 rounded hover:bg-emerald-700 disabled:opacity-50"
+          className="bg-sky-600 text-white w-full py-3 rounded hover:bg-sky-700 disabled:opacity-50"
         >
           {loading ? 'Entrando...' : 'Entrar'}
         </button>

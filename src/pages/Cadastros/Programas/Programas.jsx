@@ -1,32 +1,57 @@
-import { useState, useMemo } from "react";
-import FormInsumos from "./FormInsumos";
+import { useState, useMemo, useEffect } from "react";
+import FormProgramas from "./FormProgramas";
+import axios from "../../../api/axios";
+import API_URL from "../../../config";
 
-const dadosIniciais = [
-    { id: 1, descricao: "BOMBA FILTRO INTERNO JP-023F", criterio: "UN", valor: 95.0 },
-    { id: 2, descricao: "BOMBA SUBMERSA 2500 L/H", criterio: "UN", valor: 239.0 },
-    { id: 3, descricao: "CERCA ARAME FARPADO", criterio: "UN", valor: 10000.0 },
-    { id: 4, descricao: "CHOCADERA ELÉTRICA", criterio: "UN", valor: 660.0 },
-    { id: 5, descricao: "LAMPADA DE AQUECIMENTO", criterio: "UN", valor: 220.0 },
-    { id: 6, descricao: "MANGUEIRO (CURRAL)", criterio: "UN", valor: 12000.0 },
-    { id: 7, descricao: "PISCINA CIRCULAR INFLAVEL 2.400 LITROS", criterio: "UN", valor: 315.0 },
-];
 
-export default function InsumosPage() {
-    const [dados, setBens] = useState(dadosIniciais);
-    const [filtroDescricao, setFiltroDescricao] = useState("");
-    const [criterioAlocacao, setCriterioAlocacao] = useState("");
+export default function ProgramasPage() {
+    const [dados, setDados] = useState([]);
+    const [filtroNome, setFiltroNome] = useState("");
+    const [filtroSistema, setFiltroSistema] = useState("");
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [paginaAtual, setPaginaAtual] = useState(1);
+    const [carregando, setCarregando] = useState(false); // ← ADICIONE ESTA LINHA
+    const [erro, setErro] = useState(null);
 
-    const itensPorPagina = 5;
+    const buscarDados = async () => {
+        setCarregando(true);
+        setErro(null);
+
+        try {
+            const params = {};
+            if (filtroNome) params.nome = filtroNome;
+            if (filtroNome) params.sistema = filtroSistema;
+
+            const response = await axios.get(`${API_URL}/v1/cadastros/programas/consulta`, { params });
+
+            const dadosConvertidos = response.data
+                .filter((item) => !item.deletedAt)
+                .map((item) => ({
+                    id: item.id,
+                    nome: item.nome,
+                    sistema: item.sistema,
+                }));
+
+            setDados(dadosConvertidos);
+            setPaginaAtual(1);
+        } catch (err) {
+            setErro(err.response?.data?.message || err.message || "Erro ao buscar programas");
+        } finally {
+            setCarregando(false);
+        }
+    };
+
+
+
+    const itensPorPagina = 10;
 
     // Filtra dados pela descrição e critério de alocação (se usar)
     const dadosFiltrados = useMemo(() => {
         return dados.filter((b) =>
-            b.descricao.toLowerCase().includes(filtroDescricao.toLowerCase())
+            b.nome.toLowerCase().includes(filtroNome.toLowerCase())
             // Aqui você pode incluir filtro pelo critérioAlocacao, se fizer sentido no seu domínio
         );
-    }, [dados, filtroDescricao]);
+    }, [dados, filtroNome]);
 
     const totalPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina);
     const dadosPaginaAtual = dadosFiltrados.slice(
@@ -54,14 +79,27 @@ export default function InsumosPage() {
 
     // Botões ações (exemplo)
     const [exibindoFormulario, setExibindoFormulario] = useState(false);
+    const [registroEditando, setRegistroEditando] = useState(null);
 
     const handleIncluir = () => {
+        setRegistroEditando(null); // modo inclusão
         setExibindoFormulario(true);
     };
 
-    const salvarFormulario = (novoBem) => {
-        setBens((prev) => [...prev, novoBem]);
+    const salvarFormulario = (registro) => {
+        console.log(registro);
+
+        if (registroEditando) {
+            setDados((prev) =>
+                prev.map((b) => (b.id === registro.id ? registro : b))
+            );
+        } else {
+            setDados((prev) => [...prev, registro]);
+        }
+
         setExibindoFormulario(false);
+        setRegistroEditando(null);
+        setSelectedIds(new Set());
     };
 
     const cancelarModal = () => {
@@ -73,49 +111,74 @@ export default function InsumosPage() {
             alert("Selecione exatamente 1 item para editar");
             return;
         }
-        alert("Editar item id: " + [...selectedIds][0]);
+
+        const idParaEditar = [...selectedIds][0];
+        const registroSelecionado = dados.find((b) => b.id === idParaEditar);
+
+        setRegistroEditando(registroSelecionado); // envia o registro pro modal
+        setExibindoFormulario(true);
     };
+
     const handleExcluir = () => {
         if (selectedIds.size === 0) {
             alert("Selecione pelo menos 1 item para excluir");
             return;
         }
         if (window.confirm(`Excluir ${selectedIds.size} item(s)?`)) {
-            setBens((prev) => prev.filter((b) => !selectedIds.has(b.id)));
+            setDados((prev) => prev.filter((b) => !selectedIds.has(b.id)));
             setSelectedIds(new Set());
         }
     };
     const handleRateio = () => alert("Rateio clicado");
     const handleDepreciacao = () => alert("Depreciação clicada");
 
+    useEffect(() => {
+        buscarDados();
+    }, []);
+
     return (
         <div className="p-4 px-8 max-w-full mx-auto">
             {/* Filtros */}
             <div className="mb-6 border border-gray-300 rounded bg-gray-50 p-4 shadow-sm">
-                <h2 className="font-semibold text-xl mb-4 text-gray-700">Entrada de Insumos</h2>
+                <h2 className="font-semibold text-xl mb-4 text-gray-700">Programas</h2>
 
                 {/* Cada input em sua linha */}
-                <div className="flex flex-col gap-4">
-                    <div className="flex flex-col">
-                        <label htmlFor="descricao" className="mb-1 font-medium text-sm text-gray-600">
-                            Descrição
+                <div className="flex flex-col gap-4 w-full">
+                    {/* Linha 1 - Descrição (col-4) */}
+                    <div className="w-full lg:w-1/3">
+                        <label htmlFor="nome" className="block text-sm font-medium text-gray-600 mb-1">
+                            Nome
                         </label>
                         <input
-                            id="descricao"
+                            id="nome"
                             type="text"
-                            placeholder="Descrição"
-                            className="border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-400 w-full md:min-w-[300px] "
-                            value={filtroDescricao}
-                            onChange={(e) => setFiltroDescricao(e.target.value)}
-                            />
+                            placeholder="Nome"
+                            className="border border-gray-300 rounded px-3 py-0.5 focus:outline-none focus:ring-2 focus:ring-emerald-400 w-full"
+                            value={filtroNome}
+                            onChange={(e) => setFiltroNome(e.target.value)}
+                        />
+                    </div>
+                    <div className="w-full lg:w-1/3">
+                        <label htmlFor="sistema" className="block text-sm font-medium text-gray-600 mb-1">
+                            Sistema
+                        </label>
+                        <input
+                            id="sistema"
+                            type="text"
+                            placeholder="Sistema"
+                            className="border border-gray-300 rounded px-3 py-0.5 focus:outline-none focus:ring-2 focus:ring-emerald-400 w-full"
+                            value={filtroSistema}
+                            onChange={(e) => setFiltroSistema(e.target.value)}
+                        />
                     </div>
                 </div>
+
 
                 {/* Botão alinhado à esquerda, abaixo dos inputs */}
                 <div className="mt-6 flex justify-start">
                     <button
-                        onClick={() => setPaginaAtual(1)}
-                        className="bg-emerald-500 text-white px-4 py-1 rounded hover:bg-emerald-600 transition-shadow shadow-md"
+                        onClick={buscarDados}
+                        className="bg-emerald-500 text-white px-3 py-0.5 rounded hover:bg-emerald-600 transition-shadow shadow-md"
                     >
                         Procurar
                     </button>
@@ -127,42 +190,34 @@ export default function InsumosPage() {
             <div className="mb-1 flex flex-wrap gap-2">
                 <button
                     onClick={handleIncluir}
-                    className="bg-gray-700 text-white px-4 py-1 rounded hover:bg-gray-800 transition"
+                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-emerald-500 transition"
                 >
                     Incluir
                 </button>
                 <button
                     onClick={handleEditar}
                     disabled={selectedIds.size !== 1}
-                    className="bg-gray-400 text-gray-700 px-4 py-1 rounded disabled:opacity-50"
+                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-emerald-500 transition disabled:opacity-50"
                 >
                     Editar
                 </button>
                 <button
                     onClick={handleExcluir}
                     disabled={selectedIds.size === 0}
-                    className="bg-gray-400 text-gray-700 px-4 py-1 rounded disabled:opacity-50"
+                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-emerald-500 transition disabled:opacity-50"
                 >
                     Excluir
-                </button>
-                <button
-                    onClick={handleRateio}
-                    disabled={selectedIds.size === 0}
-                    className="bg-gray-400 text-gray-700 px-4 py-1 rounded disabled:opacity-50"
-                >
-                    Rateio
-                </button>
-                <button
-                    onClick={handleDepreciacao}
-                    disabled={selectedIds.size === 0}
-                    className="bg-gray-400 text-gray-700 px-4 py-1 rounded disabled:opacity-50"
-                >
-                    Depreciação
                 </button>
             </div>
 
             {/* Tabela */}
             <div className="overflow-x-auto border border-gray-300 rounded shadow-sm">
+                {carregando && (
+                    <div className="text-center text-gray-600 my-4">Carregando dados...</div>
+                )}
+                {erro && (
+                    <div className="text-center text-red-500 my-4">Erro: {erro}</div>
+                )}
                 <table className="min-w-full text-sm">
                     <thead className="bg-gray-100 border-b border-gray-300">
                         <tr>
@@ -176,41 +231,40 @@ export default function InsumosPage() {
                                     onChange={selecionarTodos}
                                 />
                             </th>
-                            <th className="p-3 text-left font-semibold">Descrição</th>
-                            <th className="p-3 text-left font-semibold">Critério</th>
-                            <th className="p-3 text-left font-semibold">Valor</th>
+                            <th className="p-3 text-left font-semibold">Sistema</th>
+                            <th className="p-3 text-left font-semibold">Nome</th>
+                            <th className="p-3 text-left font-semibold">Caminho</th>
+                            <th className="p-3 text-left font-semibold">Método</th>
                         </tr>
                     </thead>
                     <tbody>
                         {dadosPaginaAtual.length === 0 && (
                             <tr>
                                 <td colSpan={4} className="p-6 text-center text-gray-500">
-                                    Nenhum bem encontrado.
+                                    Nenhum registro encontrado.
                                 </td>
                             </tr>
                         )}
 
-                        {dadosPaginaAtual.map(({ id, descricao, criterio, valor }) => (
+                        {dadosPaginaAtual.map(({ id, sistema, nome, caminho, metodo }) => (
                             <tr
+
                                 key={id}
+                                onClick={() => toggleSelecionado(id)}
                                 className={`border-b border-gray-200 ${selectedIds.has(id) ? "bg-emerald-100" : ""
                                     }`}
                             >
-                                <td className="p-3 text-center">
+                                <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
                                     <input
                                         type="checkbox"
                                         checked={selectedIds.has(id)}
                                         onChange={() => toggleSelecionado(id)}
                                     />
                                 </td>
-                                <td className="p-3">{descricao}</td>
-                                <td className="p-3">{criterio}</td>
-                                <td className="p-3">
-                                    {valor.toLocaleString("pt-BR", {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
-                                </td>
+                                <td className="p-3">{sistema}</td>  
+                                <td className="p-3">{nome}</td>  
+                                <td className="p-3">{caminho}</td>  
+                                <td className="p-3">{metodo}</td>                      
                             </tr>
                         ))}
                     </tbody>
@@ -238,7 +292,11 @@ export default function InsumosPage() {
                 </button>
             </div>
             {exibindoFormulario && (
-                <FormInsumos onSalvar={salvarFormulario} onCancelar={cancelarModal} />
+                <FormProgramas
+                    onSalvar={salvarFormulario}
+                    onCancelar={cancelarModal}
+                    registro={registroEditando} // ← importante
+                />
             )}
         </div>
     );

@@ -17,44 +17,23 @@ export default function NavbarDesktop() {
   const menu1 = [
     { id: 'dashboard', label: 'Dashboard', icon: <FaTachometerAlt />, withMenu: false },
     { id: 'cadastros', label: 'Cadastros', icon: <FaRegRectangleList />, withMenu: true },
-    { id: 'despesas', label: 'Lançamento Despesa', icon: <FaCartShopping />, withMenu: true },
-    { id: 'receitas', label: 'Lançamento Receita', icon: <FaGift />, withMenu: true },
-    { id: 'relatorios', label: 'Relatórios Gerenciais', icon: <MdInsertChartOutlined />, withMenu: true },
   ];
 
   const menu2 = [
-    { id: 'configuracoes', label: 'Configuração', icon: <FaCog />, withMenu: true },
     { id: 'usuarios', label: 'victorseraphin@gmail.com', icon: <FaUser />, withMenu: true },
   ];
 
   // Opções dos submenus
   const cadastrosOptions = [
-    { url: 'cadastros/bens', label: 'Bens' },
-    { url: 'cadastros/centro_custos', label: 'Centro de Custos' },
-    { url: 'cadastros/centro_lucros', label: 'Centro de Lucros' },
-    { url: 'cadastros/cliente_fornecedor', label: 'Clientes / Fornecedores' },
-    { url: 'cadastros/funcionarios', label: 'Funcionários' },
-    { url: 'cadastros/insumos', label: 'Insumos' },
-    { url: 'cadastros/taxas', label: 'Taxas' },
-    { url: 'cadastros/unidade_negocio', label: 'Unidade de Negócios' },
+    { url: 'cadastros/empresas', label: 'Empresas' },
+    { url: 'cadastros/sistemas', label: 'Sistemas' },
+    { url: 'cadastros/grupos', label: 'Grupos' },
+    { url: 'cadastros/programas', label: 'Programas' },
+    { url: 'cadastros/usuarios', label: 'Usuários' },
   ];
-
-  const despesasOptions = [
-    { url: '/despesas/insumos', label: 'Insumos' },
-    { url: '/despesas/pagamento_funcionario', label: 'Pagamentos de Funcionários' },
-  ];
-
-  const receitasOptions = [{ url: '/receitas/produtos', label: 'Produtos' }];
-
-  const relatoriosOptions = [
-    { url: '/relatorios/demonstracao_resultado', label: 'Demonstração do Resultado' },
-    { url: '/relatorios/resumo_despesa', label: 'Resumo de Despesas' },
-    { url: '/relatorios/resumo_receita', label: 'Resumo de Receitas' },
-  ];
-
-  const configuracoesOptions = [{ url: '/system/enderecos', label: 'Endereços' }];
 
   const usuariosOptions = [
+    { url: '/system/enderecos', label: 'Endereços' },
     { url: '/perfil', label: 'Perfil' },
     { url: '/sair', label: 'Sair' },
   ];
@@ -95,7 +74,7 @@ export default function NavbarDesktop() {
           <li key={url}>
             <Link
               to={url}
-              className="block w-full text-left px-4 py-2 text-[12px] hover:bg-emerald-500 hover:text-white"
+              className="block w-full text-left px-4 py-2 text-[12px] hover:bg-sky-700 hover:text-white"
               onClick={() => setOpenSubmenu(null)}
             >
               {label}
@@ -109,15 +88,15 @@ export default function NavbarDesktop() {
   return (
     <div>
       {/* Top bar */}
-      <div className="bg-emerald-500 text-white px-6 py-3 flex justify-between items-center text-sm">
-        <div className="text-lg font-bold">NavAgro</div>
+      <div className="bg-sky-700 text-white px-6 py-3 flex justify-between items-center text-sm">
+        <div className="text-lg font-bold">NavCore</div>
 
         <div className="hidden md:flex items-center gap-4 relative">
           <div className="relative">
             <input
               type="text"
               placeholder="Procurar"
-              className="bg-emerald-600 placeholder-white text-white px-4 py-1 rounded-full text-sm focus:outline-none"
+              className="bg-sky-800 placeholder-white text-white px-4 py-1 rounded-full text-sm focus:outline-none"
             />
             <FaSearch className="absolute right-3 top-1.5 text-white text-xs" />
           </div>
