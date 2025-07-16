@@ -14,9 +14,7 @@ import Programas from './pages/Cadastros/Programas/Programas';
 import Login from './pages/Login/Login';
 
 export default function App() {
-  const { user, loading } = useAuth();
-
-  if (loading) return <div>Carregando...</div>;
+  const { user } = useAuth();
 
   return (
     <>

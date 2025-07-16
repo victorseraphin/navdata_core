@@ -1,56 +1,60 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../api/axios';
-import { setAccessToken, setUser as saveUserToStorage, getUser as getUserFromStorage } from './tokenManager';
+import { setAccessToken, getAccessToken, clearAccessToken } from './tokenManager';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // estado reativo
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const tryRestoreSession = async () => {
-      const storedUser = getUserFromStorage();
-
-      if (storedUser) {
-        setUser(storedUser); // restaura no estado do React
-      }
-
+    const restoreSession = async () => {
       try {
-        const res = await api.post('/refresh-token');
-        setAccessToken(res.data.token);
-        saveUserToStorage(res.data.systemUser);
-        setUser(res.data.systemUser); // atualiza o estado do contexto
+        const resRefresh = await api.post('/refresh-token', null, {
+          withCredentials: true, // envia cookie HttpOnly
+        });
+        setAccessToken(resRefresh.data.accessToken);
+
+        const resUser = await api.get('/me', {
+          headers: {
+            Authorization: `Bearer ${resRefresh.data.accessToken}`,
+          },
+        });
+        setUser(resUser.data);
       } catch (err) {
-        console.log("Token inválido ou expirado");
-        setAccessToken(null);
-        saveUserToStorage(null);
+        console.log('Sessão expirada');
+        clearAccessToken();
         setUser(null);
       } finally {
         setLoading(false);
       }
     };
 
-    tryRestoreSession();
+    restoreSession();
   }, []);
 
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const response = await api.post('/login', { email, password });
+      const res = await api.post('/login', { email, password }, { withCredentials: true });
+      setAccessToken(res.data.accessToken);
 
-      setAccessToken(response.data.accessToken);
-      saveUserToStorage(response.data.systemUser);
-      setUser(response.data.systemUser);
+      const me = await api.get('/me', {
+        headers: {
+          Authorization: `Bearer ${res.data.accessToken}`,
+        },
+      });
+
+      setUser(me.data);
     } finally {
       setLoading(false);
     }
   };
 
   const logout = async () => {
-    await api.post('/logout');
-    saveUserToStorage(null);
-    setAccessToken(null);
+    await api.post('/logout', null, { withCredentials: true });
+    clearAccessToken();
     setUser(null);
   };
 

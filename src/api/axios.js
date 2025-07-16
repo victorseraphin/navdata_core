@@ -1,6 +1,6 @@
 import axios from 'axios';
 import API_AUTH_URL from "../services/apiAuthUrl";
-import { getAccessToken, setAccessToken, setUser, getUser } from '../hooks/tokenManager';
+import { getAccessToken, setAccessToken } from '../hooks/tokenManager';
 
 const api = axios.create({
   baseURL: API_AUTH_URL,
