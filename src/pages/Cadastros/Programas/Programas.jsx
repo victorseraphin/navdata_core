@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import FormProgramas from "./FormProgramas";
 import axios from "../../../api/axios";
-import API_URL from "../../../config";
+import API_URL from "../../../services/apiAuthUrl";
 
 
 export default function ProgramasPage() {

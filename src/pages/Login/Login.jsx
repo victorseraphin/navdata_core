@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
   const { login, loading } = useAuth();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
-
+  const navigate = useNavigate();
+  
   const handleSubmit = async e => {
     e.preventDefault();
     setError(null);
     try {
-      await login(username, password);
-      // redirecionar para página inicial ou dashboard
+      await login(email, password);
+      navigate('/dashboard');
     } catch {
       setError('Usuário ou senha inválidos');
     }
@@ -29,8 +31,8 @@ export default function LoginPage() {
         <input
           type="text"
           placeholder="E-mail"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
+          value={email}
+          onChange={e => setEmail(e.target.value)}
           className="border p-3 rounded w-full mb-4"
           required
         />

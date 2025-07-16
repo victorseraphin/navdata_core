@@ -1,10 +1,13 @@
 import axios from 'axios';
-import API_BASE_URL from "../config";
-import { getAccessToken, setAccessToken } from '../hooks/tokenManager';
+import API_AUTH_URL from "../services/apiAuthUrl";
+import { getAccessToken, setAccessToken, setUser, getUser } from '../hooks/tokenManager';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_AUTH_URL,
   withCredentials: true, // para enviar cookies HttpOnly
+  headers: {
+    'X-System-Name': 'NavSystemCore',
+  }
 });
 
 // Interceptor para adicionar token no header Authorization
@@ -25,7 +28,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const response = await api.post('/refresh');
+        const response = await api.post('/refresh-token');
         const newToken = response.data.accessToken;
         setAccessToken(newToken);
         originalRequest.headers['Authorization'] = `Bearer ${newToken}`;

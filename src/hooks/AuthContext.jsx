@@ -1,37 +1,47 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../api/axios';
-import { setAccessToken } from './tokenManager';
+import { setAccessToken, setUser as saveUserToStorage, getUser as getUserFromStorage } from './tokenManager';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); // estado reativo
   const [loading, setLoading] = useState(true);
 
-  // Tenta renovar o token ao carregar a aplicação
   useEffect(() => {
-    const tryRefresh = async () => {
+    const tryRestoreSession = async () => {
+      const storedUser = getUserFromStorage();
+
+      if (storedUser) {
+        setUser(storedUser); // restaura no estado do React
+      }
+
       try {
         const res = await api.post('/refresh-token');
         setAccessToken(res.data.token);
-        setUser(res.data.user); // ou apenas set algo fictício se não vier user
+        saveUserToStorage(res.data.systemUser);
+        setUser(res.data.systemUser); // atualiza o estado do contexto
       } catch (err) {
         console.log("Token inválido ou expirado");
+        setAccessToken(null);
+        saveUserToStorage(null);
         setUser(null);
       } finally {
         setLoading(false);
       }
     };
 
-    tryRefresh();
+    tryRestoreSession();
   }, []);
 
-  const login = async (username, password) => {
+  const login = async (email, password) => {
     setLoading(true);
     try {
-      const response = await api.post('/login', { username, password });
+      const response = await api.post('/login', { email, password });
+
       setAccessToken(response.data.accessToken);
-      setUser(response.data.user);
+      saveUserToStorage(response.data.systemUser);
+      setUser(response.data.systemUser);
     } finally {
       setLoading(false);
     }
@@ -39,8 +49,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     await api.post('/logout');
-    setUser(null);
+    saveUserToStorage(null);
     setAccessToken(null);
+    setUser(null);
   };
 
   return (

@@ -28,7 +28,7 @@ export default function App() {
         </Route>
 
         {/* PRIVATE ROUTES */}
-        <Route element={!user ? <PrivateLayout /> : <Navigate to="/login" replace /> }>
+        <Route element={user ? <PrivateLayout /> : <Navigate to="/login" replace /> }>
 
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
