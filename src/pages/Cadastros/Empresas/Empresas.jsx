@@ -162,8 +162,6 @@ export default function EmpresasPage() {
             setCarregando(false);
         }
     };
-    const handleRateio = () => alert("Rateio clicado");
-    const handleDepreciacao = () => alert("Depreciação clicada");
 
     useEffect(() => {
         buscarDados();
