@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { FiX } from "react-icons/fi";
+import { useAuth } from '../../../hooks/AuthContext';
 
 export default function FormEmpresas({ onSalvar, onCancelar, registro }) {
+    const { user } = useAuth();
     const {
         register,
         handleSubmit,
@@ -11,11 +13,11 @@ export default function FormEmpresas({ onSalvar, onCancelar, registro }) {
         formState: { errors },
     } = useForm({
         defaultValues: {
-            nome: "",
+            name: "",
             documento: "",
             matricula: "",
             localizacao: "",
-            inscricao: "",
+            inscricao: ""
         },
     });
 
@@ -30,9 +32,9 @@ export default function FormEmpresas({ onSalvar, onCancelar, registro }) {
         }
     }, [registro, setValue, reset]);
 
-    const onSubmit = (data) => {
+    const onSubmit = (data) => {        
         onSalvar({
-            id: registro?.id || Date.now(),
+            id: registro?.id || null,
             ...data,
         });
     };
@@ -63,23 +65,19 @@ export default function FormEmpresas({ onSalvar, onCancelar, registro }) {
 
             {/* Conteúdo do formulário */}
             <div className="flex-1 px-6 py-6 overflow-y-auto">
-                <form className="w-full flex flex-col gap-6 " onSubmit={(e) => e.preventDefault()}>
+                <form className="w-full flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
                 
-                    <div className="flex flex-col lg:flex-row gap-4 w-fullitems-center justify-center">
+                    <div className="flex flex-col lg:flex-row gap-4 w-full items-center justify-center">
                         <div className="w-full lg:w-2/3">
                             <label className="block text-sm font-medium text-gray-600 mb-1">Nome</label>
                             <input
                                 type="text"
-                                {...register("nome", { required: "Nome obrigatório" })}
+                                {...register("name", { required: "Nome obrigatório" })}
                                 className="w-full border border-gray-300 px-3 py-1 rounded text-sm"
                                 placeholder="Digite o nome"
                             />
-                            {errors.nome && <p className="text-sm text-red-500 mt-1">{errors.nome.message}</p>}
+                            {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>}
                         </div>
-                    </div>
-
-                    {/* Linha: Valores */}
-                    <div className="flex flex-col md:flex-row gap-4 w-fullitems-center justify-center">
                         <div className="w-full lg:w-2/3">
                             <label className="block text-sm font-medium text-gray-600 mb-1">Documento</label>
                             <input
@@ -90,49 +88,38 @@ export default function FormEmpresas({ onSalvar, onCancelar, registro }) {
                             />
                             {errors.documento && <p className="text-sm text-red-500 mt-1">{errors.documento.message}</p>}
                         </div>
-                    </div>
-
-                    {/* Linha: Valores */}
-                    <div className="flex flex-col md:flex-row gap-4 w-fullitems-center justify-center">
                         <div className="w-full lg:w-2/3">
-                            <label className="block text-sm font-medium text-gray-600 mb-1">Matricula</label>
+                            <label className="block text-sm font-medium text-gray-600 mb-1">Matrícula</label>
                             <input
                                 type="text"
-                                {...register("matricula", { required: "Matrícula obrigatória" })}
+                                {...register("matricula", { required: "Matrícula obrigatório" })}
                                 className="w-full border border-gray-300 px-3 py-1 rounded text-sm"
-                                placeholder="Digite a matrícula"
+                                placeholder="Digite o matricula"
                             />
                             {errors.matricula && <p className="text-sm text-red-500 mt-1">{errors.matricula.message}</p>}
                         </div>
-                    </div>
-
-                    {/* Linha: Valores */}
-                    <div className="flex flex-col md:flex-row gap-4 w-full items-center justify-center">
-                        <div className="w-full lg:w-2/3">
-                            <label className="block text-sm font-medium text-gray-600 mb-1">Inscrição</label>
-                            <input
-                                type="text"
-                                {...register("inscricao", { required: "Inscrição obrigatório" })}
-                                className="w-full border border-gray-300 px-3 py-1 rounded text-sm"
-                                placeholder="Digite a inscrição"
-                            />
-                            {errors.inscricao && <p className="text-sm text-red-500 mt-1">{errors.inscricao.message}</p>}
-                        </div>
-                    </div>
-
-                    {/* Linha: Valores */}
-                    <div className="flex flex-col md:flex-row gap-4 w-full items-center justify-center">
                         <div className="w-full lg:w-2/3">
                             <label className="block text-sm font-medium text-gray-600 mb-1">Localização</label>
                             <input
                                 type="text"
-                                {...register("localizacao", { required: "Localização obrigatória" })}
+                                {...register("localizacao", { required: "Documento obrigatório" })}
                                 className="w-full border border-gray-300 px-3 py-1 rounded text-sm"
-                                placeholder="Digite a localização"
+                                placeholder="Digite o localização"
                             />
                             {errors.localizacao && <p className="text-sm text-red-500 mt-1">{errors.localizacao.message}</p>}
                         </div>
+                        <div className="w-full lg:w-2/3">
+                            <label className="block text-sm font-medium text-gray-600 mb-1">inscrição</label>
+                            <input
+                                type="text"
+                                {...register("inscricao", { required: "inscrição obrigatório" })}
+                                className="w-full border border-gray-300 px-3 py-1 rounded text-sm"
+                                placeholder="Digite o inscrição"
+                            />
+                            {errors.inscricao && <p className="text-sm text-red-500 mt-1">{errors.inscricao.message}</p>}
+                        </div>
                     </div>
+                    
                 </form>
             </div>
         </div>
