@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    restoreSession();
+    tryRestoreSession();
   }, []);
 
   const login = async (email, password) => {
