@@ -1,30 +1,30 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../api/axios';
-import { setAccessToken, setUser as saveUserToStorage, getUser as getUserFromStorage } from './tokenManager';
+import { setAccessToken, getAccessToken, clearAccessToken } from './tokenManager';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // estado reativo
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const fetchUser = async () => {
+    try {
+      const res = await api.get('/me');
+      setUser(res.data);
+    } catch (error) {
+      console.error("Erro ao obter dados do usuário:", error);
+      setUser(null);
+    }
+  };
 
   useEffect(() => {
     const tryRestoreSession = async () => {
-      const storedUser = getUserFromStorage();
-
-      if (storedUser) {
-        setUser(storedUser); // restaura no estado do React
-      }
-
       try {
-        const res = await api.post('/refresh-token');
-        setAccessToken(res.data.token);
-        saveUserToStorage(res.data.systemUser);
-        setUser(res.data.systemUser); // atualiza o estado do contexto
+        await fetchUser();
       } catch (err) {
-        console.log("Token inválido ou expirado");
-        setAccessToken(null);
-        saveUserToStorage(null);
+        console.log("Sessão expirada ou inválida");
+        clearAccessToken();
         setUser(null);
       } finally {
         setLoading(false);
@@ -37,21 +37,25 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const response = await api.post('/login', { email, password });
-
-      setAccessToken(response.data.accessToken);
-      saveUserToStorage(response.data.systemUser);
-      setUser(response.data.systemUser);
+      const res = await api.post('/login', { email, password });
+      setAccessToken(res.data.accessToken);
+      await fetchUser();
+    } catch (err) {
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
   const logout = async () => {
-    await api.post('/logout');
-    saveUserToStorage(null);
-    setAccessToken(null);
-    setUser(null);
+    try {
+      await api.post('/logout');
+    } catch (e) {
+      console.warn("Erro ao fazer logout:", e);
+    } finally {
+      clearAccessToken();
+      setUser(null);
+    }
   };
 
   return (

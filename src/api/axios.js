@@ -1,46 +1,75 @@
 import axios from 'axios';
 import API_AUTH_URL from "../services/apiAuthUrl";
-import { getAccessToken, setAccessToken, setUser, getUser } from '../hooks/tokenManager';
+import { getAccessToken, setAccessToken, clearAccessToken } from '../hooks/tokenManager';
 
 const api = axios.create({
   baseURL: API_AUTH_URL,
-  withCredentials: true, // para enviar cookies HttpOnly
+  withCredentials: true,
   headers: {
     'X-System-Name': 'NavSystemCore',
   }
 });
 
-// Interceptor para adicionar token no header Authorization
+// Interceptor para injetar o token no header Authorization
 api.interceptors.request.use(config => {
   const token = getAccessToken();
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
   return config;
-});
+}, error => Promise.reject(error));
 
-// Interceptor para refresh token quando der 401
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   response => response,
   async error => {
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // Se já está tentando refresh, espera a fila resolver
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers['Authorization'] = `Bearer ${token}`;
+          return api(originalRequest);
+        }).catch(err => Promise.reject(err));
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
+
       try {
         const response = await api.post('/refresh-token');
         const newToken = response.data.accessToken;
         setAccessToken(newToken);
-        originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+        api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        processQueue(null, newToken);
         return api(originalRequest);
       } catch (refreshError) {
-        // Aqui pode limpar o contexto auth, redirecionar pra login, etc
+        processQueue(refreshError, null);
+        clearAccessToken();
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
+
     return Promise.reject(error);
   }
 );
 
 export default api;
-
