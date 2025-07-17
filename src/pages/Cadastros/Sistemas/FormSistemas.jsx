@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { FiX } from "react-icons/fi";
+import { useAuth } from '../../../hooks/AuthContext';
 
 export default function FormSistemas({ onSalvar, onCancelar, registro }) {
+    const { user } = useAuth();
     const {
         register,
         handleSubmit,
@@ -11,7 +13,9 @@ export default function FormSistemas({ onSalvar, onCancelar, registro }) {
         formState: { errors },
     } = useForm({
         defaultValues: {
-            nome: "",
+            name: "",
+            systemUnitId: registro?.systemUnitId || user.systemUnit.id,
+            systemUnitDesc: registro?.systemUnitDesc || "branco",
         },
     });
 
@@ -27,8 +31,12 @@ export default function FormSistemas({ onSalvar, onCancelar, registro }) {
     }, [registro, setValue, reset]);
 
     const onSubmit = (data) => {
+        console.log(data);
+        
         onSalvar({
-            id: registro?.id || Date.now(),
+            id: registro?.id || null,
+            systemUnitId: registro?.systemUnitId || user.systemUnit.id,
+            systemUnitDesc: registro?.systemUnitDesc || "branco",
             ...data,
         });
     };
@@ -66,11 +74,11 @@ export default function FormSistemas({ onSalvar, onCancelar, registro }) {
                             <label className="block text-sm font-medium text-gray-600 mb-1">Nome</label>
                             <input
                                 type="text"
-                                {...register("nome", { required: "Nome obrigatório" })}
+                                {...register("name", { required: "Nome obrigatório" })}
                                 className="w-full border border-gray-300 px-3 py-1 rounded text-sm"
                                 placeholder="Digite o nome"
                             />
-                            {errors.nome && <p className="text-sm text-red-500 mt-1">{errors.nome.message}</p>}
+                            {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>}
                         </div>
                     </div>
                     

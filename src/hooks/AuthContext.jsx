@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api/axios';
+import api from '../api/axiosAuth';
 import { setAccessToken, getAccessToken, clearAccessToken } from './tokenManager';
+import apiAuth from '../api/axiosAuth';
 
 const AuthContext = createContext();
 
@@ -10,7 +11,9 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const res = await api.get('/me');
+      const res = await apiAuth.get('/v1/auth/me');
+      console.log(res);
+      
       setUser(res.data);
     } catch (err) {
       console.error("Erro ao buscar usuário:", err);
@@ -31,7 +34,7 @@ export const AuthProvider = ({ children }) => {
         // Tenta obter novo accessToken usando refreshToken via cookie HttpOnly
         console.log("refresh-token");
 
-        const res = await api.post('/refresh-token');
+        const res = await apiAuth.post('/v1/auth/refresh-token');
         const newToken = res.data.accessToken;
         setAccessToken(newToken);
         await fetchUser();
@@ -53,7 +56,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const res = await api.post('/login', { email, password });
+      const res = await apiAuth.post('/v1/auth/login', { email, password });
       setAccessToken(res.data.accessToken);
       await fetchUser();
     } catch (err) {
@@ -65,7 +68,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.post('/logout');
+      await apiAuth.post('/logout');
     } catch (e) {
       console.warn("Erro ao fazer logout:", e);
     } finally {

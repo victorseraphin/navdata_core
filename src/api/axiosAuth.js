@@ -2,7 +2,7 @@ import axios from 'axios';
 import API_AUTH_URL from "../services/apiAuthUrl";
 import { getAccessToken, setAccessToken, clearAccessToken } from '../hooks/tokenManager';
 
-const api = axios.create({
+const apiAuth = axios.create({
   baseURL: API_AUTH_URL,
   withCredentials: true,
   headers: {
@@ -11,7 +11,7 @@ const api = axios.create({
 });
 
 // Interceptor para injetar o token no header Authorization
-api.interceptors.request.use(config => {
+apiAuth.interceptors.request.use(config => {
   const token = getAccessToken();
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`;
@@ -33,7 +33,7 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-api.interceptors.response.use(
+apiAuth.interceptors.response.use(
   response => response,
   async error => {
     const originalRequest = error.config;
@@ -53,12 +53,12 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const response = await api.post('/v1/auth/refresh-token');
+        const response = await apiAuth.post('/v1/auth/refresh-token');
         const newToken = response.data.accessToken;
         setAccessToken(newToken);
-        api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        apiAuth.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
         processQueue(null, newToken);
-        return api(originalRequest);
+        return apiAuth(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
         clearAccessToken();
@@ -72,4 +72,4 @@ api.interceptors.response.use(
   }
 );
 
-export default api;
+export default apiAuth;
