@@ -12,25 +12,41 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await api.get('/me');
       setUser(res.data);
-    } catch (error) {
-      console.error("Erro ao obter dados do usuário:", error);
+    } catch (err) {
+      console.error("Erro ao buscar usuário:", err);
+      throw err;
+    }
+  };
+
+  const tryRestoreSession = async () => {
+    try {
+      const accessToken = getAccessToken();
+
+      if (accessToken) {
+        // Se já tem accessToken, tenta buscar o usuário        
+        console.log("fetchUser");
+        await fetchUser();
+      } else {
+        setLoading(true);
+        // Tenta obter novo accessToken usando refreshToken via cookie HttpOnly
+        console.log("refresh-token");
+
+        const res = await api.post('/refresh-token');
+        const newToken = res.data.accessToken;
+        setAccessToken(newToken);
+        await fetchUser();
+
+      }
+    } catch (err) {
+      console.warn("Falha ao restaurar sessão:", err);
+      clearAccessToken();
       setUser(null);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    const tryRestoreSession = async () => {
-      try {
-        await fetchUser();
-      } catch (err) {
-        console.log("Sessão expirada ou inválida");
-        clearAccessToken();
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     tryRestoreSession();
   }, []);
 
@@ -55,6 +71,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       clearAccessToken();
       setUser(null);
+      setLoading(false);
     }
   };
 

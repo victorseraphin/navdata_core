@@ -3,10 +3,20 @@ import { FaBars, FaTimes, FaTachometerAlt, FaGift, FaSearch, FaCog, FaUser, FaCh
 import { FaRegRectangleList, FaCartShopping } from 'react-icons/fa6';
 import { MdInsertChartOutlined } from 'react-icons/md';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/AuthContext';
 
 export default function NavbarDesktop() {
   const submenuRef = useRef(null);
+  const { logout } = useAuth();
+  const { user } = useAuth();
+
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
 
   const [active, setActive] = useState('dashboard');
 
@@ -20,7 +30,7 @@ export default function NavbarDesktop() {
   ];
 
   const menu2 = [
-    { id: 'usuarios', label: 'victorseraphin@gmail.com', icon: <FaUser />, withMenu: true },
+    { id: 'usuarios', label: user.email, icon: <FaUser />, withMenu: true },
   ];
 
   // Opções dos submenus
@@ -35,7 +45,7 @@ export default function NavbarDesktop() {
   const usuariosOptions = [
     { url: '/system/enderecos', label: 'Endereços' },
     { url: '/perfil', label: 'Perfil' },
-    { url: '/sair', label: 'Sair' },
+    { action: handleLogout, label: 'Sair' },
   ];
 
   // Fecha qualquer submenu clicando fora
@@ -70,15 +80,27 @@ export default function NavbarDesktop() {
 
     return (
       <ul className={posClasses} ref={submenuRef}>
-        {options.map(({ url, label }) => (
-          <li key={url}>
-            <Link
-              to={url}
-              className="block w-full text-left px-4 py-2 text-[12px] hover:bg-sky-700 hover:text-white"
-              onClick={() => setOpenSubmenu(null)}
-            >
-              {label}
-            </Link>
+        {options.map(({ url, label, action }) => (
+          <li key={url || label || index}>
+            {action ? (
+              <button
+                onClick={() => {
+                  action();
+                  setOpenSubmenu(null);
+                }}
+                className="w-full text-left px-4 py-2 text-[12px] hover:bg-sky-700 hover:text-white"
+              >
+                {label}
+              </button>
+            ) : (
+              <Link
+                to={url}
+                className="block w-full text-left px-4 py-2 text-[12px] hover:bg-sky-700 hover:text-white"
+                onClick={() => setOpenSubmenu(null)}
+              >
+                {label}
+              </Link>
+            )}
           </li>
         ))}
       </ul>
@@ -135,11 +157,10 @@ export default function NavbarDesktop() {
                     setOpenSubmenu(null);
                   }}
                   className={`flex flex-col items-center justify-center px-4 py-2 text-xs font-medium transition-colors duration-300
-                  ${
-                    active === id
+                  ${active === id
                       ? 'text-black border-b-2 border-red-500'
                       : 'text-gray-400 hover:text-black hover:border-gray-300 border-b-2 border-transparent'
-                  }`}
+                    }`}
                 >
                   <div className="text-xl">{icon}</div>
                   {label}
@@ -149,11 +170,10 @@ export default function NavbarDesktop() {
                   <button
                     onClick={() => toggleSubmenu(id)}
                     className={`flex flex-col items-center justify-center px-4 py-2 text-xs font-medium transition-colors duration-300
-                    ${
-                      active === id
+                    ${active === id
                         ? 'text-black border-b-2 border-red-500'
                         : 'text-gray-400 hover:text-black hover:border-gray-300 border-b-2 border-transparent'
-                    }`}
+                      }`}
                     aria-expanded={openSubmenu === id}
                     aria-haspopup="true"
                   >

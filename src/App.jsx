@@ -14,8 +14,12 @@ import Programas from './pages/Cadastros/Programas/Programas';
 import Login from './pages/Login/Login';
 
 export default function App() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
+  if (loading) {
+    return <div className="w-full h-screen flex items-center justify-center">Carregando...</div>;
+  }
+  
   return (
     <>
 
@@ -26,7 +30,7 @@ export default function App() {
         </Route>
 
         {/* PRIVATE ROUTES */}
-        <Route element={user ? <PrivateLayout /> : <Navigate to="/login" replace /> }>
+        <Route element={user ? <PrivateLayout /> : <Navigate to="/login" replace />}>
 
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />

@@ -1,11 +1,7 @@
-export const setAccessToken = (token) => {
-  sessionStorage.setItem('accessToken', token);
-};
+const ACCESS_TOKEN_KEY = 'accessToken';
 
-export const getAccessToken = () => {
-  return sessionStorage.getItem('accessToken');
-};
+export const getAccessToken = () => localStorage.getItem(ACCESS_TOKEN_KEY);
 
-export const clearAccessToken = () => {
-  sessionStorage.removeItem('accessToken');
-};
+export const setAccessToken = (token) => localStorage.setItem(ACCESS_TOKEN_KEY, token);
+
+export const clearAccessToken = () => localStorage.removeItem(ACCESS_TOKEN_KEY);
