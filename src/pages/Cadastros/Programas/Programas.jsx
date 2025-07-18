@@ -10,7 +10,7 @@ export default function ProgramasPage() {
     const [documento, setDocumento] = useState("");
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [paginaAtual, setPaginaAtual] = useState(1);
-    const [carregando, setCarregando] = useState(false); // ← ADICIONE ESTA LINHA
+    const [carregando, setCarregando] = useState(false); 
     const [erro, setErro] = useState(null);
 
     const buscarDados = async () => {
@@ -31,7 +31,7 @@ export default function ProgramasPage() {
                     name: item.name,
                     path: item.path,
                     method: item.method,
-                    systemUnit: item.systemUnit,
+                    systemUnitId: item.systemUnitId,
                     systemId: item.systemId,
                 }));
 

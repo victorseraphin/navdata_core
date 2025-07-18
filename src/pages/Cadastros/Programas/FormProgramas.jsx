@@ -1,13 +1,42 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FiX } from "react-icons/fi";
 import { useAuth } from '../../../hooks/AuthContext';
+import axios from "../../../api/axiosAuth";
+import API_URL from "../../../services/apiAuthUrl";
 
 export default function FormProgramas({ onSalvar, onCancelar, registro }) {
     const { user } = useAuth();
+    const [carregando, setCarregando] = useState(false);
+    const [erro, setErro] = useState(null);
 
     // Pegar lista de sistemas para popular o select
-    const availableSystems = user?.systemUnit?.systems || [];
+    //const listSystems = user?.systemUnit?.systems || [];
+
+    const [listSystems, setListSystems] = useState([]);
+
+    const careggarListSystems = async () => {
+        setCarregando(true);
+        setErro(null);
+
+        try {
+
+            const response = await axios.get(`${API_URL}/v1/systems`);
+
+            const dadosConvertidos = response.data
+                .filter((item) => !item.deletedAt)
+                .map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                }));
+
+            setListSystems(dadosConvertidos);
+        } catch (err) {
+            setErro(err.response?.data?.message || err.message || "Erro ao buscar sistemas");
+        } finally {
+            setCarregando(false);
+        }
+    };
 
     const {
         register,
@@ -20,46 +49,50 @@ export default function FormProgramas({ onSalvar, onCancelar, registro }) {
             name: "",
             path: "",
             method: "",
-            systemUnit: registro?.systemUnit || user.systemUnit,
-            systemId: registro?.systemId || ""
+            systemUnitId: registro?.systemUnitId || user.systemUnit.id,
+            systemId: String(registro?.systemId || "")
 
         },
     });
 
+    useEffect(() => {
+        careggarListSystems();
+    }, []);
+
     // Preenche o formulário em modo edição
     useEffect(() => {
-        if (registro) {
-            console.log(registro);
-            
-            Object.entries(registro).forEach(([chave, valor]) => {
-                // Se for systems, setar os ids como string array
-                if (chave === "systems" && Array.isArray(valor)) {
-                    setValue(
-                        chave,
-                        valor.map(s => s.id.toString())
-                    );
-                } else {
-                    setValue(chave, valor);
-                }
-            });
-        } else {
+        if (registro && listSystems.length > 0) {
+            const id = typeof registro.systemId === "object" ? registro.systemId.id : registro.systemId;
+            reset({ ...registro, systemId: String(id) });
+        } else if (!registro && listSystems.length > 0) {
             reset();
         }
-    }, [registro, setValue, reset]);
+    }, [registro, listSystems, reset]);
+
+
 
     const onSubmit = (data) => {
+        console.log(data);
+
 
         onSalvar({
             id: registro?.id || null,
-            systemUnit: registro?.systemUnit || user.systemUnit,
+            systemUnitId: registro?.systemUnitId || user.systemUnit.id,
+            systemId: Number(data.systemId),
             // Você pode enviar o array de ids, ou fazer fetch dos objetos completos no backend
-          
+
             ...data,
         });
     };
 
     return (
         <div className="fixed inset-0 z-50 bg-white flex flex-col overflow-auto">
+            {carregando && (
+                <div className="text-center text-gray-600 my-4">Carregando dados...</div>
+            )}
+            {erro && (
+                <div className="text-center text-red-500 my-4">Erro: {erro}</div>
+            )}
             {/* Barra superior */}
             <div className="flex items-center justify-between h-14 border-b shadow-sm sticky top-0 bg-sky-600 z-10 text-white">
                 <button
@@ -116,23 +149,23 @@ export default function FormProgramas({ onSalvar, onCancelar, registro }) {
                             />
                             {errors.method && <p className="text-sm text-red-500 mt-1">{errors.method.message}</p>}
                         </div>
-                    </div>
 
-                    {/* Select múltiplo para systemId */}
-                    <div className="w-full lg:w-2/3 mt-4">
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Sistemas</label>
-                        <select                            
-                            {...register("systemId", { required: "Selecione ao menos um sistema" })}
-                            className="w-full border border-gray-300 px-3 py-1 rounded text-sm "
-                        >
-                            <option value="">Selecione...</option>
-                            {availableSystems.map((sys) => (
-                                <option key={sys.id} value={sys.id.toString()}>
-                                    {sys.name}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.systemId && <p className="text-sm text-red-500 mt-1">{errors.systemId.message}</p>}
+                        {/* Select múltiplo para systemId */}
+                        <div className="w-full lg:w-2/3">
+                            <label className="block text-sm font-medium text-gray-600 mb-1">Sistemas</label>
+                            <select
+                                {...register("systemId", { required: "Selecione ao menos um sistema" })}
+                                className="w-full border border-gray-300 px-3 py-1 rounded text-sm "
+                            >
+                                <option value="">Selecione...</option>
+                                {listSystems.map((sys) => (
+                                    <option key={sys.id} value={sys.id.toString()}>
+                                        {sys.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.systemId && <p className="text-sm text-red-500 mt-1">{errors.systemId.message}</p>}
+                        </div>
                     </div>
 
                 </form>

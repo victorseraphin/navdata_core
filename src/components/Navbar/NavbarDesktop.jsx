@@ -37,8 +37,8 @@ export default function NavbarDesktop() {
   const cadastrosOptions = [
     { url: 'cadastros/empresas', label: 'Empresas' },
     { url: 'cadastros/sistemas', label: 'Sistemas' },
-    { url: 'cadastros/grupos', label: 'Grupos' },
     { url: 'cadastros/programas', label: 'Programas' },
+    { url: 'cadastros/grupos', label: 'Grupos' },
     { url: 'cadastros/usuarios', label: 'Usuários' },
   ];
 

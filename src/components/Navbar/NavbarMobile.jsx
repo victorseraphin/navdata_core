@@ -34,6 +34,7 @@ export default function NavbarMobile() {
     cadastros: [
       { url: 'cadastros/empresas', label: 'Empresas' },
       { url: 'cadastros/sistemas', label: 'Sistemas' },
+      { url: 'cadastros/programas', label: 'Programas' },
       { url: 'cadastros/grupos', label: 'Grupos' },
     ],
     usuario: [

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import FormGrupos from "./FormGrupos";
-import axios from "../../../api/axios";
+import axios from "../../../api/axiosAuth";
 import API_URL from "../../../services/apiAuthUrl";
 
 
@@ -10,7 +10,7 @@ export default function GruposPage() {
     const [documento, setDocumento] = useState("");
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [paginaAtual, setPaginaAtual] = useState(1);
-    const [carregando, setCarregando] = useState(false); // ← ADICIONE ESTA LINHA
+    const [carregando, setCarregando] = useState(false); 
     const [erro, setErro] = useState(null);
 
     const buscarDados = async () => {
@@ -19,21 +19,24 @@ export default function GruposPage() {
 
         try {
             const params = {};
-            if (filtroNome) params.nome = filtroNome;
+            if (filtroNome) params.name = filtroNome;
 
-            const response = await axios.get(`${API_URL}/v1/cadastros/grupos/consulta`, { params });
-
+            const response = await axios.get(`${API_URL}/v1/system_groups`, { params });
+            console.log(response.data);
+            
             const dadosConvertidos = response.data
                 .filter((item) => !item.deletedAt)
                 .map((item) => ({
                     id: item.id,
-                    nome: item.nome,
+                    name: item.name,
+                    systemUnitId: item.systemUnitId,
+                    systemId: item.systemId,
                 }));
 
             setDados(dadosConvertidos);
             setPaginaAtual(1);
         } catch (err) {
-            setErro(err.response?.data?.message || err.message || "Erro ao buscar grupos");
+            setErro(err.response?.data?.message || err.message || "Erro ao buscar sistemas");
         } finally {
             setCarregando(false);
         }
@@ -46,7 +49,7 @@ export default function GruposPage() {
     // Filtra dados pela descrição e critério de alocação (se usar)
     const dadosFiltrados = useMemo(() => {
         return dados.filter((b) =>
-            b.nome.toLowerCase().includes(filtroNome.toLowerCase())
+            b.name.toLowerCase().includes(filtroNome.toLowerCase())
             // Aqui você pode incluir filtro pelo critérioAlocacao, se fizer sentido no seu domínio
         );
     }, [dados, filtroNome]);
@@ -84,20 +87,29 @@ export default function GruposPage() {
         setExibindoFormulario(true);
     };
 
-    const salvarFormulario = (registro) => {
-        console.log(registro);
+    const salvarFormulario = async (registro) => {
+        setCarregando(true);
+        setErro(null);
 
-        if (registroEditando) {
-            setDados((prev) =>
-                prev.map((b) => (b.id === registro.id ? registro : b))
-            );
-        } else {
-            setDados((prev) => [...prev, registro]);
+        try {
+            if (registroEditando) {
+                // PUT ou PATCH (edição)
+                const response = await axios.put(`/v1/system_groups/${registro.id}`, registro);
+                buscarDados();
+            } else {
+                // POST (criação)
+                const response = await axios.post(`/v1/system_groups`, registro);
+                buscarDados();
+            }
+
+            setExibindoFormulario(false);
+            setRegistroEditando(null);
+            setSelectedIds(new Set());
+        } catch (err) {
+            setErro(err.response?.data?.message || err.message || "Erro ao salvar o sistema");
+        } finally {
+            setCarregando(false);
         }
-
-        setExibindoFormulario(false);
-        setRegistroEditando(null);
-        setSelectedIds(new Set());
     };
 
     const cancelarModal = () => {
@@ -117,14 +129,36 @@ export default function GruposPage() {
         setExibindoFormulario(true);
     };
 
-    const handleExcluir = () => {
+    const handleExcluir = async () => {
         if (selectedIds.size === 0) {
             alert("Selecione pelo menos 1 item para excluir");
             return;
         }
-        if (window.confirm(`Excluir ${selectedIds.size} item(s)?`)) {
+
+        if (!window.confirm(`Excluir ${selectedIds.size} item(s)?`)) return;
+
+        setCarregando(true);
+        setErro(null);
+
+        try {
+            // Convertendo o Set em Array
+            const idsParaExcluir = Array.from(selectedIds);
+
+            // Requisições DELETE em paralelo
+            await Promise.all(
+                idsParaExcluir.map((id) =>
+                    axios.delete(`/v1/system_groups/${id}`)
+                )
+            );
+
+            // Remover localmente após sucesso
             setDados((prev) => prev.filter((b) => !selectedIds.has(b.id)));
             setSelectedIds(new Set());
+        } catch (err) {
+            console.error(err);
+            setErro(err.response?.data?.message || err.message || "Erro ao excluir item(s)");
+        } finally {
+            setCarregando(false);
         }
     };
     const handleRateio = () => alert("Rateio clicado");
@@ -144,14 +178,14 @@ export default function GruposPage() {
                 <div className="flex flex-col gap-4 w-full">
                     {/* Linha 1 - Descrição (col-4) */}
                     <div className="w-full lg:w-1/3">
-                        <label htmlFor="nome" className="block text-sm font-medium text-gray-600 mb-1">
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-1">
                             Nome
                         </label>
                         <input
-                            id="nome"
+                            id="name"
                             type="text"
                             placeholder="Nome"
-                            className="border border-gray-300 rounded px-3 py-0.5 focus:outline-none focus:ring-2 focus:ring-emerald-400 w-full"
+                            className="border border-gray-300 rounded px-3 py-0.5 focus:outline-none focus:ring-2 focus:ring-sky-400 w-full"
                             value={filtroNome}
                             onChange={(e) => setFiltroNome(e.target.value)}
                         />
@@ -163,7 +197,7 @@ export default function GruposPage() {
                 <div className="mt-6 flex justify-start">
                     <button
                         onClick={buscarDados}
-                        className="bg-emerald-500 text-white px-3 py-0.5 rounded hover:bg-emerald-600 transition-shadow shadow-md"
+                        className="bg-sky-500 text-white px-3 py-0.5 rounded hover:bg-sky-600 transition-shadow shadow-md"
                     >
                         Procurar
                     </button>
@@ -175,21 +209,21 @@ export default function GruposPage() {
             <div className="mb-1 flex flex-wrap gap-2">
                 <button
                     onClick={handleIncluir}
-                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-emerald-500 transition"
+                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-sky-500 transition"
                 >
                     Incluir
                 </button>
                 <button
                     onClick={handleEditar}
                     disabled={selectedIds.size !== 1}
-                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-emerald-500 transition disabled:opacity-50"
+                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-sky-500 transition disabled:opacity-50"
                 >
                     Editar
                 </button>
                 <button
                     onClick={handleExcluir}
                     disabled={selectedIds.size === 0}
-                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-emerald-500 transition disabled:opacity-50"
+                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-sky-500 transition disabled:opacity-50"
                 >
                     Excluir
                 </button>
@@ -228,12 +262,12 @@ export default function GruposPage() {
                             </tr>
                         )}
 
-                        {dadosPaginaAtual.map(({ id, nome, status }) => (
+                        {dadosPaginaAtual.map(({ id, name, path, method }) => (
                             <tr
 
                                 key={id}
                                 onClick={() => toggleSelecionado(id)}
-                                className={`border-b border-gray-200 ${selectedIds.has(id) ? "bg-emerald-100" : ""
+                                className={`border-b border-gray-200 ${selectedIds.has(id) ? "bg-sky-100" : ""
                                     }`}
                             >
                                 <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
@@ -243,7 +277,7 @@ export default function GruposPage() {
                                         onChange={() => toggleSelecionado(id)}
                                     />
                                 </td>
-                                <td className="p-3">{nome}</td>                      
+                                <td className="p-3">{name}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -259,7 +293,7 @@ export default function GruposPage() {
                 >
                     &lt;
                 </button>
-                <div className="bg-emerald-500 text-white rounded-full px-4 py-1 font-semibold">
+                <div className="bg-sky-500 text-white rounded-full px-4 py-1 font-semibold">
                     {paginaAtual}
                 </div>
                 <button
