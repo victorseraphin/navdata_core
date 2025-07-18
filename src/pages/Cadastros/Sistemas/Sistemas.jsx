@@ -22,14 +22,14 @@ export default function SistemasPage() {
             if (filtroNome) params.name = filtroNome;
 
             const response = await axios.get(`${API_URL}/v1/systems`, { params });
-
+            console.log(response.data);
+            
             const dadosConvertidos = response.data
                 .filter((item) => !item.deletedAt)
                 .map((item) => ({
                     id: item.id,
                     name: item.name,
-                    systemUnitId: item.systemUnitId,
-                    systemUnitDesc: item.systemUnitDesc,
+                    systemUnit: item.systemUnit,
                 }));
 
             setDados(dadosConvertidos);
