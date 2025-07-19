@@ -5,31 +5,24 @@ import { useAuth } from '../../../hooks/AuthContext';
 import axios from "../../../api/axiosAuth";
 import API_URL from "../../../services/apiAuthUrl";
 
-export default function FormProgramas({ onSalvar, onCancelar, registro }) {
+export default function FormGrupos({ onSalvar, onCancelar, registro }) {
     const { user } = useAuth();
     const [carregando, setCarregando] = useState(false);
     const [erro, setErro] = useState(null);
 
-    // Pegar lista de sistemas para popular o select
-    //const listSystems = user?.systemUnit?.systems || [];
-
     const [listSystems, setListSystems] = useState([]);
 
-    const careggarListSystems = async () => {
+    const caregarListSystems = async () => {
         setCarregando(true);
         setErro(null);
-
         try {
-
             const response = await axios.get(`${API_URL}/v1/systems`);
-
             const dadosConvertidos = response.data
                 .filter((item) => !item.deletedAt)
                 .map((item) => ({
                     id: item.id,
                     name: item.name,
                 }));
-
             setListSystems(dadosConvertidos);
         } catch (err) {
             setErro(err.response?.data?.message || err.message || "Erro ao buscar sistemas");
@@ -54,7 +47,7 @@ export default function FormProgramas({ onSalvar, onCancelar, registro }) {
     });
 
     useEffect(() => {
-        careggarListSystems();
+        caregarListSystems();
     }, []);
 
     // Preenche o formulário em modo edição

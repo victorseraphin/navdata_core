@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import FormGrupos from "./FormGrupos";
+import FormGrupoPermissoes from "./FormGrupoPermissoes";
 import axios from "../../../api/axiosAuth";
 import API_URL from "../../../services/apiAuthUrl";
 
@@ -125,7 +126,7 @@ export default function GruposPage() {
         const idParaEditar = [...selectedIds][0];
         const registroSelecionado = dados.find((b) => b.id === idParaEditar);
 
-        setRegistroEditando(registroSelecionado); // envia o registro pro modal
+        setRegistroEditando(registroSelecionado); 
         setExibindoFormulario(true);
     };
 
@@ -161,8 +162,48 @@ export default function GruposPage() {
             setCarregando(false);
         }
     };
-    const handleRateio = () => alert("Rateio clicado");
-    const handleDepreciacao = () => alert("Depreciação clicada");
+    
+    const [exibindoFormularioPermissoes, setExibindoFormularioPermissoes] = useState(false);
+    const [registroPermissoes, setRegistroPermissoes] = useState(null);
+
+    const handleIncluirPermissoes = () => {
+        if (selectedIds.size !== 1) {
+            alert("Selecione exatamente 1 item para editar");
+            return;
+        }
+
+        const idParaEditar = [...selectedIds][0];
+        const registroSelecionado = dados.find((b) => b.id === idParaEditar);
+
+        setRegistroPermissoes(registroSelecionado); 
+        setExibindoFormularioPermissoes(true);
+    };
+
+    const salvarFormularioPermissoes = async (registroPermissoes) => {
+        setCarregando(true);
+        setErro(null);
+
+        try {
+            if (registroEditando) {
+                // PUT ou PATCH (edição)
+                const response = await axios.put(`/v1/system_groups/${registro.id}`, registro);
+                buscarDados();
+            } 
+
+            setExibindoFormularioPermissoes(false);
+            setRegistroPermissoes(null);
+            setSelectedIds(new Set());
+        } catch (err) {
+            setErro(err.response?.data?.message || err.message || "Erro ao salvar o sistema");
+        } finally {
+            setCarregando(false);
+        }
+    };
+
+    const cancelarModalPermissoes = () => {
+        setExibindoFormularioPermissoes(false);
+    };
+    
 
     useEffect(() => {
         buscarDados();
@@ -226,6 +267,13 @@ export default function GruposPage() {
                     className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-sky-500 transition disabled:opacity-50"
                 >
                     Excluir
+                </button>
+                <button
+                    onClick={handleIncluirPermissoes}
+                    disabled={selectedIds.size !== 1}
+                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-sky-500 transition disabled:opacity-50"
+                >
+                    Permissoes
                 </button>
             </div>
 
@@ -308,7 +356,14 @@ export default function GruposPage() {
                 <FormGrupos
                     onSalvar={salvarFormulario}
                     onCancelar={cancelarModal}
-                    registro={registroEditando} // ← importante
+                    registro={registroEditando}
+                />
+            )}
+            {exibindoFormularioPermissoes && (
+                <FormGrupoPermissoes
+                    onSalvar={salvarFormularioPermissoes}
+                    onCancelar={cancelarModalPermissoes}
+                    registro={registroPermissoes} // ← importante
                 />
             )}
         </div>
