@@ -10,6 +10,7 @@ import Empresas from './pages/Cadastros/Empresas/Empresas';
 import Sistemas from './pages/Cadastros/Sistemas/Sistemas';
 import Grupos from './pages/Cadastros/Grupos/Grupos';
 import Programas from './pages/Cadastros/Programas/Programas';
+import Usuarios from './pages/Cadastros/Usuarios/Usuarios';
 
 import Login from './pages/Login/Login';
 
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/cadastros/sistemas" element={<Sistemas />} />
           <Route path="/cadastros/grupos" element={<Grupos />} />
           <Route path="/cadastros/programas" element={<Programas />} />
+          <Route path="/cadastros/usuarios" element={<Usuarios />} />
 
           {/* Adicione os demais caminhos aqui */}
 
