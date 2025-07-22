@@ -30,28 +30,28 @@ export default function FormGrupoPermissoes({ registro, onSalvar, onCancelar }) 
     }
   };
 
+  const carregarPermissoes = async () => {
+    setCarregando(true);
+    setErro(null);
+
+    try {
+      const response = await axios.get(
+        `${API_URL}/v1/system_groups/${registro.id}/permissions`
+      );
+      setProgramas(response.data);
+      setSistemaSelecionado(registro.systemId?.toString() || "");
+    } catch (err) {
+      setErro("Erro ao carregar permissões: " + (err.response?.data?.message || err.message));
+    } finally {
+      setCarregando(false);
+    }
+  };
+
   useEffect(() => {
     if (!registro) return;
 
     console.log(registro);
 
-
-    const carregarPermissoes = async () => {
-      setCarregando(true);
-      setErro(null);
-
-      try {
-        const response = await axios.get(
-          `${API_URL}/v1/system_groups/${registro.id}/permissions`
-        );
-        setProgramas(response.data);
-        setSistemaSelecionado(registro.systemId?.toString() || "");
-      } catch (err) {
-        setErro("Erro ao carregar permissões: " + (err.response?.data?.message || err.message));
-      } finally {
-        setCarregando(false);
-      }
-    };
 
 
     carregarPermissoes();
@@ -162,7 +162,7 @@ export default function FormGrupoPermissoes({ registro, onSalvar, onCancelar }) 
           </div>
 
         </form>
-        <div className="bg-white rounded shadow-lg w-full  p-6 relative">
+        <div className="bg-white rounded shadow-[0_0_10px_rgba(0,0,0,0.15)] w-full my-6 p-6 relative">
           <h2 className="text-xl font-bold mb-4">Permissões do Grupo</h2>
 
           {carregando ? (

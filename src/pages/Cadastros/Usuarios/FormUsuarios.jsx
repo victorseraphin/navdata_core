@@ -10,10 +10,7 @@ export default function FormUsuarios({ onSalvar, onCancelar, registro }) {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
 
-  const [listSystems, setListSystems] = useState([]);
   const [listUnits, setListUnits] = useState([]);
-  const [listGroups, setListGroups] = useState([]);
-  const [listPrograms, setListPrograms] = useState([]);
 
   const isAdmin = user?.id === 1;
 
@@ -21,16 +18,9 @@ export default function FormUsuarios({ onSalvar, onCancelar, registro }) {
     setCarregando(true);
     setErro(null);
     try {
-      const [systemsRes, groupsRes, programsRes, unitsRes] = await Promise.all([
-        axios.get(`${API_URL}/v1/systems`),
-        axios.get(`${API_URL}/v1/system_groups`),
-        axios.get(`${API_URL}/v1/system_programs`),
+      const [unitsRes] = await Promise.all([
         isAdmin ? axios.get(`${API_URL}/v1/system_units`) : Promise.resolve({ data: [] })
       ]);
-
-      setListSystems(systemsRes.data.filter((s) => !s.deletedAt));
-      setListGroups(groupsRes.data);
-      setListPrograms(programsRes.data);
       if (isAdmin) setListUnits(unitsRes.data);
     } catch (err) {
       setErro(err.response?.data?.message || err.message || "Erro ao carregar dados.");
@@ -65,27 +55,21 @@ export default function FormUsuarios({ onSalvar, onCancelar, registro }) {
   }, []);
 
   useEffect(() => {
-    if (registro && listSystems.length > 0) {
+    if (registro && listUnits.length > 0) {
       reset({
         ...registro,
-        systemId: String(registro.systemId?.id || registro.systemId || ""),
-        //systemGroups: registro.systemGroups?.map((g) => g.id) || [],
-        //systemPrograms: registro.systemPrograms?.map((p) => p.id) || [],
         systemUnitId: isAdmin ? registro.systemUnitId : user.systemUnitId,
       });
     }
-  }, [registro, listSystems, listGroups, listPrograms, listUnits]);
+  }, [registro, listUnits]);
 
   const onSubmit = (data) => {
     console.log(data);
-    
+
     onSalvar({
       ...data,
       id: registro?.id || null,
-      systemId: Number(data.systemId),
       systemUnitId: isAdmin ? Number(data.systemUnitId) : Number(user.systemUnitId),
-      //systemGroups: data.systemGroups.map(Number),
-      //systemPrograms: data.systemPrograms.map(Number),
     });
   };
 
@@ -128,6 +112,18 @@ export default function FormUsuarios({ onSalvar, onCancelar, registro }) {
               <label className="block text-sm font-medium text-gray-600 mb-1">Senha</label>
               <input type="password" {...register("password")} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
             </div>
+            <div className="w-full lg:w-2/3">
+              <label className="block text-sm font-medium text-gray-600 mb-1">Documento</label>
+              <input {...register("doc")} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
+            </div>
+
+            <div className="w-full lg:w-2/3">
+              <label className="block text-sm font-medium text-gray-600 mb-1">Telefone</label>
+              <input {...register("fone")} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
+            </div>
+
+          </div>
+          <div className="flex flex-col lg:flex-row gap-4 w-full items-center justify-center">
 
 
             {isAdmin && (
@@ -143,31 +139,6 @@ export default function FormUsuarios({ onSalvar, onCancelar, registro }) {
                 </select>
               </div>
             )}
-
-            <div className="w-full lg:w-2/3">
-              <label className="text-sm font-medium text-gray-600">Sistema</label>
-              <select {...register("systemId", { required: "Sistema obrigatório" })} className="w-full border border-gray-300 px-3 py-1 rounded text-sm ">
-                <option value="">Selecione...</option>
-                {listSystems.map((sys) => (
-                  <option key={sys.id} value={sys.id}>
-                    {sys.name}
-                  </option>
-                ))}
-              </select>
-              {errors.systemId && <p className="text-red-500 text-sm">{errors.systemId.message}</p>}
-            </div>
-          </div>
-          <div className="flex flex-col lg:flex-row gap-4 w-full items-center justify-center">
-
-            <div className="w-full lg:w-2/3">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Documento</label>
-              <input {...register("doc")} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
-            </div>
-
-            <div className="w-full lg:w-2/3">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Telefone</label>
-              <input {...register("fone")} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
-            </div>
           </div>
           <div className="flex flex-col lg:flex-row gap-4 w-full items-center justify-center">
 

@@ -7,9 +7,32 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
   const [programas, setProgramas] = useState([]);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
+  const [systemUnitsSelecionado, setSystemUnitsSelecionado] = useState("");
   const [sistemaSelecionado, setSistemaSelecionado] = useState("");
 
+  const [listSystemUnits, setListSystemUnits] = useState([]);
   const [listSystems, setListSystems] = useState([]);
+  const [listSystemGroups, setListSystemGroups] = useState([]);
+  const [listSystemPrograms, setListSystemPrograms] = useState([]);
+
+  const caregarListSystemUnits = async () => {
+    setCarregando(true);
+    setErro(null);
+    try {
+      const response = await axios.get(`${API_URL}/v1/system_units`);
+      const dadosConvertidos = response.data
+        .filter((item) => !item.deletedAt)
+        .map((item) => ({
+          id: item.id,
+          name: item.name,
+        }));
+      setListSystemUnits(dadosConvertidos);
+    } catch (err) {
+      setErro(err.response?.data?.message || err.message || "Erro ao buscar sistemas");
+    } finally {
+      setCarregando(false);
+    }
+  };
 
   const caregarListSystems = async () => {
     setCarregando(true);
@@ -30,32 +53,33 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
     }
   };
 
+
+  const carregarPermissoes = async () => {
+    setCarregando(true);
+    setErro(null);
+
+    try {
+      const response = await axios.get(
+        `${API_URL}/v1/system_users/${registro.id}/permissions`
+      );
+      setProgramas(response.data);
+      setSistemaSelecionado(registro.systemId?.toString() || "");
+    } catch (err) {
+      setErro("Erro ao carregar permissões: " + (err.response?.data?.message || err.message));
+    } finally {
+      setCarregando(false);
+    }
+  };
+
   useEffect(() => {
     if (!registro) return;
 
     console.log(registro);
 
 
-    const carregarPermissoes = async () => {
-      setCarregando(true);
-      setErro(null);
-
-      try {
-        const response = await axios.get(
-          `${API_URL}/v1/system_groups/${registro.id}/permissions`
-        );
-        setProgramas(response.data);
-        setSistemaSelecionado(registro.systemId?.toString() || "");
-      } catch (err) {
-        setErro("Erro ao carregar permissões: " + (err.response?.data?.message || err.message));
-      } finally {
-        setCarregando(false);
-      }
-    };
-
-
     carregarPermissoes();
     caregarListSystems();
+    caregarListSystemUnits();
   }, [registro]);
 
   const alterarPermissao = (programId) => {
@@ -76,7 +100,7 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
 
     try {
       await axios.put(
-        `${API_URL}/v1/system_groups/${registro.id}/permissions`,
+        `${API_URL}/v1/system_users/${registro.id}/permissions`,
         payload
       );
       onSalvar?.(); // notifica a página principal
@@ -146,13 +170,13 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
             </div>
 
             <div className="w-full lg:w-2/3">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Sistemas</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Unidade</label>
               <select
                 className="w-full border border-gray-300 px-3 py-1 rounded text-sm "
-                value={sistemaSelecionado}
+                value={systemUnitsSelecionado}
                 disabled
               >
-                {listSystems.map((sys) => (
+                {listSystemUnits.map((sys) => (
                   <option key={sys.id} value={sys.id.toString()}>
                     {sys.name}
                   </option>
@@ -162,7 +186,153 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
           </div>
 
         </form>
-        <div className="bg-white rounded shadow-lg w-full  p-6 relative">
+        <div className="flex flex-col lg:flex-row gap-6 w-full my-6 ">
+          {/* Tabela Sistemas */}
+          <div className="bg-white rounded shadow-[0_0_10px_rgba(0,0,0,0.15)] w-full lg:w-1/2 p-6 relative ">
+            <h2 className="text-xl font-bold mb-4">Sistemas do Usuário</h2>
+
+            {carregando ? (
+              <p className="text-gray-600">Carregando sistemas...</p>
+            ) : erro ? (
+              <p className="text-red-600">{erro}</p>
+            ) : (
+              <div>
+                <div className="overflow-y-auto max-h-[60vh] border border-gray-300 rounded">
+                  <div className="mb-4 flex justify-between items-center">
+                    <input
+                      type="text"
+                      placeholder="Filtrar por nome..."
+                      value={filtro}
+                      onChange={(e) => {
+                        setFiltro(e.target.value);
+                        setPaginaAtual(1);
+                      }}
+                      className="border px-3 py-1 rounded text-sm w-1/2"
+                    />
+                    <span className="text-sm text-gray-600">
+                      {programasFiltrados.length} permissões encontradas
+                    </span>
+                  </div>
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="p-2 text-left">Nome</th>
+                        <th className="p-2 text-center">Permitir</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {programasPaginados.map((programa) => (
+                        <tr key={programa.programId} className="border-t">
+                          <td className="p-2">{programa.name}</td>
+                          <td className="p-2 text-center">
+                            <input
+                              type="checkbox"
+                              checked={programa.permitted}
+                              onChange={() => alterarPermissao(programa.programId)}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="flex justify-center items-center gap-6 mt-6 text-gray-700">
+                  <button
+                    onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
+                    disabled={paginaAtual === 1}
+                    className="disabled:opacity-50 px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
+                  >
+                    &lt;
+                  </button>
+                  <div className="bg-sky-500 text-white rounded-full px-4 py-1 font-semibold">
+                    {paginaAtual}
+                  </div>
+                  <button
+                    onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
+                    disabled={paginaAtual === totalPaginas}
+                    className="disabled:opacity-50 px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
+                  >
+                    &gt;
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Tabela Grupos */}
+          <div className="bg-white rounded shadow-[0_0_10px_rgba(0,0,0,0.15)] w-full lg:w-1/2 p-6 relative">
+            <h2 className="text-xl font-bold mb-4">Grupos do Usuário</h2>
+
+            {carregando ? (
+              <p className="text-gray-600">Carregando grupos...</p>
+            ) : erro ? (
+              <p className="text-red-600">{erro}</p>
+            ) : (
+              <div>
+                <div className="overflow-y-auto max-h-[60vh] border border-gray-300 rounded">
+                  <div className="mb-4 flex justify-between items-center">
+                    <input
+                      type="text"
+                      placeholder="Filtrar por nome..."
+                      value={filtro}
+                      onChange={(e) => {
+                        setFiltro(e.target.value);
+                        setPaginaAtual(1);
+                      }}
+                      className="border px-3 py-1 rounded text-sm w-1/2"
+                    />
+                    <span className="text-sm text-gray-600">
+                      {programasFiltrados.length} permissões encontradas
+                    </span>
+                  </div>
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="p-2 text-left">Nome</th>
+                        <th className="p-2 text-center">Permitir</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {programasPaginados.map((programa) => (
+                        <tr key={programa.programId} className="border-t">
+                          <td className="p-2">{programa.name}</td>
+                          <td className="p-2 text-center">
+                            <input
+                              type="checkbox"
+                              checked={programa.permitted}
+                              onChange={() => alterarPermissao(programa.programId)}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="flex justify-center items-center gap-6 mt-6 text-gray-700">
+                  <button
+                    onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
+                    disabled={paginaAtual === 1}
+                    className="disabled:opacity-50 px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
+                  >
+                    &lt;
+                  </button>
+                  <div className="bg-sky-500 text-white rounded-full px-4 py-1 font-semibold">
+                    {paginaAtual}
+                  </div>
+                  <button
+                    onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
+                    disabled={paginaAtual === totalPaginas}
+                    className="disabled:opacity-50 px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
+                  >
+                    &gt;
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded shadow-[0_0_10px_rgba(0,0,0,0.15)] w-full  p-6 relative">
           <h2 className="text-xl font-bold mb-4">Permissões do Usuario</h2>
 
           {carregando ? (
