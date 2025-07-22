@@ -30,6 +30,10 @@ export default function UsuariosPage() {
                 .map((item) => ({
                     id: item.id,
                     name: item.name,
+                    email: item.email,
+                    doc: item.doc,
+                    fone: item.fone,
+                    razao: item.razao,
                     systemUnitId: item.systemUnitId,
                     systemId: item.systemId,
                 }));

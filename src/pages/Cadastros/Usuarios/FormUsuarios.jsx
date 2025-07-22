@@ -39,6 +39,7 @@ export default function FormUsuarios({ onSalvar, onCancelar, registro }) {
     }
   };
 
+
   const {
     register,
     handleSubmit,
@@ -47,15 +48,15 @@ export default function FormUsuarios({ onSalvar, onCancelar, registro }) {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      name: "",
-      login: "",
-      password: "",
-      doc: "",
-      fone: "",
-      isMaster: false,
-      active: true,
-      systemUnitId: registro?.systemUnitId || user.systemUnit.id,
-      systemId: "",
+      name: registro?.name || "",
+      email: registro?.email || "",
+      password: registro?.password || "",
+      doc: registro?.doc || "",
+      fone: registro?.fone || "",
+      isMaster: registro?.isMaster || false,
+      active: registro?.active || true,
+      systemUnitId: registro?.systemUnitId || user.systemUnitId,
+      systemId: registro?.systemId || "",
     },
   });
 
@@ -68,21 +69,23 @@ export default function FormUsuarios({ onSalvar, onCancelar, registro }) {
       reset({
         ...registro,
         systemId: String(registro.systemId?.id || registro.systemId || ""),
-        systemGroups: registro.systemGroups?.map((g) => g.id) || [],
-        systemPrograms: registro.systemPrograms?.map((p) => p.id) || [],
-        systemUnitId: isAdmin ? registro.systemUnitId : user.systemUnit.id,
+        //systemGroups: registro.systemGroups?.map((g) => g.id) || [],
+        //systemPrograms: registro.systemPrograms?.map((p) => p.id) || [],
+        systemUnitId: isAdmin ? registro.systemUnitId : user.systemUnitId,
       });
     }
   }, [registro, listSystems, listGroups, listPrograms, listUnits]);
 
   const onSubmit = (data) => {
+    console.log(data);
+    
     onSalvar({
       ...data,
       id: registro?.id || null,
       systemId: Number(data.systemId),
-      systemUnitId: isAdmin ? Number(data.systemUnitId) : user.systemUnit.id,
-      systemGroups: data.systemGroups.map(Number),
-      systemPrograms: data.systemPrograms.map(Number),
+      systemUnitId: isAdmin ? Number(data.systemUnitId) : Number(user.systemUnitId),
+      //systemGroups: data.systemGroups.map(Number),
+      //systemPrograms: data.systemPrograms.map(Number),
     });
   };
 
@@ -112,28 +115,21 @@ export default function FormUsuarios({ onSalvar, onCancelar, registro }) {
             <div className="w-full lg:w-2/3">
               <label className="block text-sm font-medium text-gray-600 mb-1">Nome</label>
               <input {...register("name", { required: "Nome obrigatório" })} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
-              {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
+              {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>}
             </div>
 
             <div className="w-full lg:w-2/3">
               <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
-              <input type="login" {...register("login")} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
+              <input type="email" {...register("email")} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
             </div>
-
+          </div>
+          <div className="flex flex-col lg:flex-row gap-4 w-full items-center justify-center">
             <div className="w-full lg:w-2/3">
               <label className="block text-sm font-medium text-gray-600 mb-1">Senha</label>
               <input type="password" {...register("password")} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
             </div>
 
-            <div className="w-full lg:w-2/3">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Documento</label>
-              <input {...register("doc")} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
-            </div>
 
-            <div className="w-full lg:w-2/3">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Telefone</label>
-              <input {...register("fone")} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
-            </div>
             {isAdmin && (
               <div className="w-full lg:w-2/3">
                 <label className="text-sm font-medium text-gray-600">Unidade</label>
@@ -160,6 +156,20 @@ export default function FormUsuarios({ onSalvar, onCancelar, registro }) {
               </select>
               {errors.systemId && <p className="text-red-500 text-sm">{errors.systemId.message}</p>}
             </div>
+          </div>
+          <div className="flex flex-col lg:flex-row gap-4 w-full items-center justify-center">
+
+            <div className="w-full lg:w-2/3">
+              <label className="block text-sm font-medium text-gray-600 mb-1">Documento</label>
+              <input {...register("doc")} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
+            </div>
+
+            <div className="w-full lg:w-2/3">
+              <label className="block text-sm font-medium text-gray-600 mb-1">Telefone</label>
+              <input {...register("fone")} className="w-full border border-gray-300 px-3 py-1 rounded text-sm" />
+            </div>
+          </div>
+          <div className="flex flex-col lg:flex-row gap-4 w-full items-center justify-center">
 
             <div className="flex items-center gap-4 mt-2">
               <label className="text-sm font-medium text-gray-600">Ativo</label>

@@ -40,7 +40,7 @@ export default function FormGrupos({ onSalvar, onCancelar, registro }) {
     } = useForm({
         defaultValues: {
             name: "",
-            systemUnitId: registro?.systemUnitId || user.systemUnit.id,
+            systemUnitId: registro?.systemUnitId || user.systemUnitId,
             systemId: String(registro?.systemId || "")
 
         },
@@ -68,7 +68,7 @@ export default function FormGrupos({ onSalvar, onCancelar, registro }) {
 
         onSalvar({
             id: registro?.id || null,
-            systemUnitId: registro?.systemUnitId || user.systemUnit.id,
+            systemUnitId: registro?.systemUnitId || user.systemUnitId,
             systemId: Number(data.systemId),
             // Você pode enviar o array de ids, ou fazer fetch dos objetos completos no backend
 

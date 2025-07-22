@@ -14,7 +14,7 @@ export default function FormSistemas({ onSalvar, onCancelar, registro }) {
     } = useForm({
         defaultValues: {
             name: "",
-            systemUnitId: registro?.systemUnitId || user.systemUnit.id,
+            systemUnitId: registro?.systemUnitId || user.systemUnitId,
         },
     });
 
@@ -34,7 +34,7 @@ export default function FormSistemas({ onSalvar, onCancelar, registro }) {
         
         onSalvar({
             id: registro?.id || null,
-            systemUnitId: registro?.systemUnitId || user.systemUnit.id,
+            systemUnitId: registro?.systemUnitId || user.systemUnitId,
             ...data,
         });
     };
