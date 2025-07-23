@@ -68,8 +68,6 @@ export default function FormGrupoPermissoes({ registro, onSalvar, onCancelar }) 
 
   const salvar = async () => {
     const payload = programas.map((p) => (console.log(p), {
-
-
       programId: p.programId,
       permitted: p.permitted,
     }));

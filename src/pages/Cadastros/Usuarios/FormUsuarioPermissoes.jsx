@@ -4,16 +4,12 @@ import API_URL from "../../../services/apiAuthUrl";
 import { FiX } from "react-icons/fi";
 
 export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }) {
-  const [programas, setProgramas] = useState([]);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
-  const [systemUnitsSelecionado, setSystemUnitsSelecionado] = useState("");
-  const [sistemaSelecionado, setSistemaSelecionado] = useState("");
+  const [programas, setProgramas] = useState([]);
+  const [grupos, setGrupos] = useState([]);
 
   const [listSystemUnits, setListSystemUnits] = useState([]);
-  const [listSystems, setListSystems] = useState([]);
-  const [listSystemGroups, setListSystemGroups] = useState([]);
-  const [listSystemPrograms, setListSystemPrograms] = useState([]);
 
   const caregarListSystemUnits = async () => {
     setCarregando(true);
@@ -34,26 +30,6 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
     }
   };
 
-  const caregarListSystems = async () => {
-    setCarregando(true);
-    setErro(null);
-    try {
-      const response = await axios.get(`${API_URL}/v1/systems`);
-      const dadosConvertidos = response.data
-        .filter((item) => !item.deletedAt)
-        .map((item) => ({
-          id: item.id,
-          name: item.name,
-        }));
-      setListSystems(dadosConvertidos);
-    } catch (err) {
-      setErro(err.response?.data?.message || err.message || "Erro ao buscar sistemas");
-    } finally {
-      setCarregando(false);
-    }
-  };
-
-
   const carregarPermissoes = async () => {
     setCarregando(true);
     setErro(null);
@@ -63,51 +39,13 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
         `${API_URL}/v1/system_users/${registro.id}/permissions`
       );
       setProgramas(response.data);
-      setSistemaSelecionado(registro.systemId?.toString() || "");
+      //setSistemaSelecionado(registro.systemId?.toString() || "");
     } catch (err) {
       setErro("Erro ao carregar permissões: " + (err.response?.data?.message || err.message));
     } finally {
       setCarregando(false);
     }
-  };
-
-  useEffect(() => {
-    if (!registro) return;
-
-    console.log(registro);
-
-
-    carregarPermissoes();
-    caregarListSystems();
-    caregarListSystemUnits();
-  }, [registro]);
-
-  const alterarPermissao = (programId) => {
-    setProgramas((prev) =>
-      prev.map((p) =>
-        p.programId === programId ? { ...p, permitted: !p.permitted } : p
-      )
-    );
-  };
-
-  const salvar = async () => {
-    const payload = programas.map((p) => (console.log(p), {
-
-
-      programId: p.programId,
-      permitted: p.permitted,
-    }));
-
-    try {
-      await axios.put(
-        `${API_URL}/v1/system_users/${registro.id}/permissions`,
-        payload
-      );
-      onSalvar?.(); // notifica a página principal
-    } catch (err) {
-      setErro("Erro ao salvar permissões: " + (err.response?.data?.message || err.message));
-    }
-  };
+  };  
 
   const [filtro, setFiltro] = useState("");
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -123,6 +61,97 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
   const inicio = (paginaAtual - 1) * itensPorPagina;
   const fim = inicio + itensPorPagina;
   const programasPaginados = programasFiltrados.slice(inicio, fim);
+
+  const alterarPermissao = (programId) => {
+    setProgramas((prev) =>
+      prev.map((p) =>
+        p.programId === programId ? { ...p, permitted: !p.permitted } : p
+      )
+    );
+  };
+
+
+  const carregarGrupos = async () => {
+    setCarregando(true);
+    setErro(null);
+
+    try {
+      const response = await axios.get(
+        `${API_URL}/v1/system_users/${registro.id}/groups`
+      );
+      console.log(response.data);
+      
+      setGrupos(response.data);
+      //setGruposSelecionado(registro.grouId?.toString() || "");
+    } catch (err) {
+      setErro("Erro ao carregar permissões: " + (err.response?.data?.message || err.message));
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const [filtroGrupos, setFiltroGrupos] = useState("");
+  const [paginaAtualGrupos, setPaginaAtualGrupos] = useState(1);
+  const itensPorPaginaGrupos = 10;
+
+  // Filtro aplicado
+  const gruposFiltrados = grupos.filter((p) =>
+    `${p.name}`.toLowerCase().includes(filtroGrupos.toLowerCase())
+  );
+
+  // Paginação local
+  const totalPaginasGrupo = Math.ceil(gruposFiltrados.length / itensPorPaginaGrupos);
+  const inicioGrupo = (paginaAtualGrupos - 1) * itensPorPaginaGrupos;
+  const fimGrupo = inicioGrupo + itensPorPaginaGrupos;
+  const gruposPaginados = gruposFiltrados.slice(inicioGrupo, fimGrupo);
+
+  const alterarGrupo = (groupId) => {
+    setGrupos((prev) =>
+      prev.map((p) =>
+        p.groupId === groupId ? { ...p, permitted: !p.permitted } : p
+      )
+    );
+  };
+
+  useEffect(() => {
+    if (!registro) return;
+
+    carregarPermissoes();
+    carregarGrupos();
+    caregarListSystemUnits();
+  }, [registro]);
+
+  const salvar = async () => {
+    const payloadProgramas = programas.map((p) => (console.log(p), {
+      programId: p.programId,
+      permitted: p.permitted,
+    }));
+
+    try {
+      await axios.put(
+        `${API_URL}/v1/system_users/${registro.id}/permissions`,
+        payloadProgramas
+      );
+      onSalvar?.(); // notifica a página principal
+    } catch (err) {
+      setErro("Erro ao salvar permissões: " + (err.response?.data?.message || err.message));
+    }
+
+    const payloadGrupos = grupos.map((p) => (console.log(p), {
+      groupId: p.groupId,
+      permitted: p.permitted,
+    }));
+
+    try {
+      await axios.put(
+        `${API_URL}/v1/system_users/${registro.id}/groups`,
+        payloadGrupos
+      );
+      onSalvar?.(); // notifica a página principal
+    } catch (err) {
+      setErro("Erro ao salvar permissões: " + (err.response?.data?.message || err.message));
+    }
+  };
 
   if (!registro) return null;
 
@@ -173,7 +202,7 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
               <label className="block text-sm font-medium text-gray-600 mb-1">Unidade</label>
               <select
                 className="w-full border border-gray-300 px-3 py-1 rounded text-sm "
-                value={systemUnitsSelecionado}
+                //value={systemUnitsSelecionado}
                 disabled
               >
                 {listSystemUnits.map((sys) => (
@@ -274,15 +303,15 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
                     <input
                       type="text"
                       placeholder="Filtrar por nome..."
-                      value={filtro}
+                      value={filtroGrupos}
                       onChange={(e) => {
-                        setFiltro(e.target.value);
-                        setPaginaAtual(1);
+                        setFiltroGrupos(e.target.value);
+                        setPaginaAtualGrupos(1);
                       }}
                       className="border px-3 py-1 rounded text-sm w-1/2"
                     />
                     <span className="text-sm text-gray-600">
-                      {programasFiltrados.length} permissões encontradas
+                      {gruposFiltrados.length} permissões encontradas
                     </span>
                   </div>
                   <table className="min-w-full text-sm">
@@ -293,14 +322,14 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
                       </tr>
                     </thead>
                     <tbody>
-                      {programasPaginados.map((programa) => (
-                        <tr key={programa.programId} className="border-t">
-                          <td className="p-2">{programa.name}</td>
+                      {gruposPaginados.map((grupo) => (
+                        <tr key={grupo.groupId} className="border-t">
+                          <td className="p-2">{grupo.name}</td>
                           <td className="p-2 text-center">
                             <input
                               type="checkbox"
-                              checked={programa.permitted}
-                              onChange={() => alterarPermissao(programa.programId)}
+                              checked={grupo.permitted}
+                              onChange={() => alterarGrupo(grupo.groupId)}
                             />
                           </td>
                         </tr>
