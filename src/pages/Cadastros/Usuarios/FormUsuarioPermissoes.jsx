@@ -8,6 +8,7 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
   const [erro, setErro] = useState(null);
   const [programas, setProgramas] = useState([]);
   const [grupos, setGrupos] = useState([]);
+  const [sistemas, setSistemas] = useState([]);
 
   const [listSystemUnits, setListSystemUnits] = useState([]);
 
@@ -39,7 +40,6 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
         `${API_URL}/v1/system_users/${registro.id}/permissions`
       );
       setProgramas(response.data);
-      //setSistemaSelecionado(registro.systemId?.toString() || "");
     } catch (err) {
       setErro("Erro ao carregar permissões: " + (err.response?.data?.message || err.message));
     } finally {
@@ -70,7 +70,6 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
     );
   };
 
-
   const carregarGrupos = async () => {
     setCarregando(true);
     setErro(null);
@@ -82,7 +81,6 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
       console.log(response.data);
       
       setGrupos(response.data);
-      //setGruposSelecionado(registro.grouId?.toString() || "");
     } catch (err) {
       setErro("Erro ao carregar permissões: " + (err.response?.data?.message || err.message));
     } finally {
@@ -113,11 +111,53 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
     );
   };
 
+  const carregarSistemas = async () => {
+    setCarregando(true);
+    setErro(null);
+
+    try {
+      const response = await axios.get(
+        `${API_URL}/v1/system_users/${registro.id}/systems`
+      );
+      console.log(response.data);
+      
+      setSistemas(response.data);
+    } catch (err) {
+      setErro("Erro ao carregar permissões: " + (err.response?.data?.message || err.message));
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const [filtroSistemas, setFiltroSistemas] = useState("");
+  const [paginaAtualSistemas, setPaginaAtualSistemas] = useState(1);
+  const itensPorPaginaSistemas = 10;
+
+  // Filtro aplicado
+  const sistemasFiltrados = sistemas.filter((p) =>
+    `${p.name}`.toLowerCase().includes(filtroSistemas.toLowerCase())
+  );
+
+  // Paginação local
+  const totalPaginasSistema = Math.ceil(sistemasFiltrados.length / itensPorPaginaSistemas);
+  const inicioSistema = (paginaAtualSistemas - 1) * itensPorPaginaSistemas;
+  const fimSistema = inicioSistema + itensPorPaginaSistemas;
+  const sistemasPaginados = sistemasFiltrados.slice(inicioSistema, fimSistema);
+
+  const alterarSistema = (systemId) => {
+    setSistemas((prev) =>
+      prev.map((p) =>
+        p.systemId === systemId ? { ...p, permitted: !p.permitted } : p
+      )
+    );
+  };
+
   useEffect(() => {
     if (!registro) return;
 
     carregarPermissoes();
     carregarGrupos();
+    carregarSistemas();
     caregarListSystemUnits();
   }, [registro]);
 
@@ -231,15 +271,15 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
                     <input
                       type="text"
                       placeholder="Filtrar por nome..."
-                      value={filtro}
+                      value={filtroSistemas}
                       onChange={(e) => {
-                        setFiltro(e.target.value);
-                        setPaginaAtual(1);
+                        setFiltroSistemas(e.target.value);
+                        setPaginaAtualSistemas(1);
                       }}
                       className="border px-3 py-1 rounded text-sm w-1/2"
                     />
                     <span className="text-sm text-gray-600">
-                      {programasFiltrados.length} permissões encontradas
+                      {sistemasFiltrados.length} sistemas encontradas
                     </span>
                   </div>
                   <table className="min-w-full text-sm">
@@ -250,14 +290,14 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
                       </tr>
                     </thead>
                     <tbody>
-                      {programasPaginados.map((programa) => (
-                        <tr key={programa.programId} className="border-t">
-                          <td className="p-2">{programa.name}</td>
+                      {sistemasPaginados.map((sistema) => (
+                        <tr key={sistema.systemId} className="border-t">
+                          <td className="p-2">{sistema.name}</td>
                           <td className="p-2 text-center">
                             <input
                               type="checkbox"
-                              checked={programa.permitted}
-                              onChange={() => alterarPermissao(programa.programId)}
+                              checked={sistema.permitted}
+                              onChange={() => alterarSistema(sistema.systemId)}
                             />
                           </td>
                         </tr>
@@ -267,18 +307,18 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
                 </div>
                 <div className="flex justify-center items-center gap-6 mt-6 text-gray-700">
                   <button
-                    onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
-                    disabled={paginaAtual === 1}
+                    onClick={() => setPaginaAtualSistemas((p) => Math.max(1, p - 1))}
+                    disabled={paginaAtualSistemas === 1}
                     className="disabled:opacity-50 px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
                   >
                     &lt;
                   </button>
                   <div className="bg-sky-500 text-white rounded-full px-4 py-1 font-semibold">
-                    {paginaAtual}
+                    {paginaAtualSistemas}
                   </div>
                   <button
-                    onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
-                    disabled={paginaAtual === totalPaginas}
+                    onClick={() => setPaginaAtualSistemas((p) => Math.min(totalPaginas, p + 1))}
+                    disabled={paginaAtualSistemas === totalPaginasSistema}
                     className="disabled:opacity-50 px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
                   >
                     &gt;
@@ -339,18 +379,18 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
                 </div>
                 <div className="flex justify-center items-center gap-6 mt-6 text-gray-700">
                   <button
-                    onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
-                    disabled={paginaAtual === 1}
+                    onClick={() => setPaginaAtualGrupos((p) => Math.max(1, p - 1))}
+                    disabled={paginaAtualGrupos === 1}
                     className="disabled:opacity-50 px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
                   >
                     &lt;
                   </button>
                   <div className="bg-sky-500 text-white rounded-full px-4 py-1 font-semibold">
-                    {paginaAtual}
+                    {paginaAtualGrupos}
                   </div>
                   <button
-                    onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
-                    disabled={paginaAtual === totalPaginas}
+                    onClick={() => setPaginaAtualGrupos((p) => Math.min(totalPaginas, p + 1))}
+                    disabled={paginaAtualGrupos === totalPaginasGrupo}
                     className="disabled:opacity-50 px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
                   >
                     &gt;
