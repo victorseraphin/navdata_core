@@ -8,7 +8,6 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
   const [erro, setErro] = useState(null);
   const [programas, setProgramas] = useState([]);
   const [grupos, setGrupos] = useState([]);
-  const [sistemas, setSistemas] = useState([]);
 
   const [listSystemUnits, setListSystemUnits] = useState([]);
 
@@ -111,53 +110,11 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
     );
   };
 
-  const carregarSistemas = async () => {
-    setCarregando(true);
-    setErro(null);
-
-    try {
-      const response = await axios.get(
-        `${API_URL}/v1/system_users/${registro.id}/systems`
-      );
-      console.log(response.data);
-      
-      setSistemas(response.data);
-    } catch (err) {
-      setErro("Erro ao carregar permissões: " + (err.response?.data?.message || err.message));
-    } finally {
-      setCarregando(false);
-    }
-  };
-
-  const [filtroSistemas, setFiltroSistemas] = useState("");
-  const [paginaAtualSistemas, setPaginaAtualSistemas] = useState(1);
-  const itensPorPaginaSistemas = 10;
-
-  // Filtro aplicado
-  const sistemasFiltrados = sistemas.filter((p) =>
-    `${p.name}`.toLowerCase().includes(filtroSistemas.toLowerCase())
-  );
-
-  // Paginação local
-  const totalPaginasSistema = Math.ceil(sistemasFiltrados.length / itensPorPaginaSistemas);
-  const inicioSistema = (paginaAtualSistemas - 1) * itensPorPaginaSistemas;
-  const fimSistema = inicioSistema + itensPorPaginaSistemas;
-  const sistemasPaginados = sistemasFiltrados.slice(inicioSistema, fimSistema);
-
-  const alterarSistema = (systemId) => {
-    setSistemas((prev) =>
-      prev.map((p) =>
-        p.systemId === systemId ? { ...p, permitted: !p.permitted } : p
-      )
-    );
-  };
-
   useEffect(() => {
     if (!registro) return;
 
     carregarPermissoes();
     carregarGrupos();
-    carregarSistemas();
     caregarListSystemUnits();
   }, [registro]);
 
@@ -255,81 +212,10 @@ export default function FormUsuarioPermissoes({ registro, onSalvar, onCancelar }
           </div>
 
         </form>
-        <div className="flex flex-col lg:flex-row gap-6 w-full my-6 ">
-          {/* Tabela Sistemas */}
-          <div className="bg-white rounded shadow-[0_0_10px_rgba(0,0,0,0.15)] w-full lg:w-1/2 p-6 relative ">
-            <h2 className="text-xl font-bold mb-4">Sistemas do Usuário</h2>
-
-            {carregando ? (
-              <p className="text-gray-600">Carregando sistemas...</p>
-            ) : erro ? (
-              <p className="text-red-600">{erro}</p>
-            ) : (
-              <div>
-                <div className="overflow-y-auto max-h-[60vh] border border-gray-300 rounded">
-                  <div className="mb-4 flex justify-between items-center">
-                    <input
-                      type="text"
-                      placeholder="Filtrar por nome..."
-                      value={filtroSistemas}
-                      onChange={(e) => {
-                        setFiltroSistemas(e.target.value);
-                        setPaginaAtualSistemas(1);
-                      }}
-                      className="border px-3 py-1 rounded text-sm w-1/2"
-                    />
-                    <span className="text-sm text-gray-600">
-                      {sistemasFiltrados.length} sistemas encontradas
-                    </span>
-                  </div>
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="p-2 text-left">Nome</th>
-                        <th className="p-2 text-center">Permitir</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sistemasPaginados.map((sistema) => (
-                        <tr key={sistema.systemId} className="border-t">
-                          <td className="p-2">{sistema.name}</td>
-                          <td className="p-2 text-center">
-                            <input
-                              type="checkbox"
-                              checked={sistema.permitted}
-                              onChange={() => alterarSistema(sistema.systemId)}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="flex justify-center items-center gap-6 mt-6 text-gray-700">
-                  <button
-                    onClick={() => setPaginaAtualSistemas((p) => Math.max(1, p - 1))}
-                    disabled={paginaAtualSistemas === 1}
-                    className="disabled:opacity-50 px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
-                  >
-                    &lt;
-                  </button>
-                  <div className="bg-sky-500 text-white rounded-full px-4 py-1 font-semibold">
-                    {paginaAtualSistemas}
-                  </div>
-                  <button
-                    onClick={() => setPaginaAtualSistemas((p) => Math.min(totalPaginas, p + 1))}
-                    disabled={paginaAtualSistemas === totalPaginasSistema}
-                    className="disabled:opacity-50 px-3 py-1 rounded border border-gray-300 hover:bg-gray-100"
-                  >
-                    &gt;
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="flex flex-col lg:flex-row gap-6 w-full my-6 ">          
 
           {/* Tabela Grupos */}
-          <div className="bg-white rounded shadow-[0_0_10px_rgba(0,0,0,0.15)] w-full lg:w-1/2 p-6 relative">
+          <div className="bg-white rounded shadow-[0_0_10px_rgba(0,0,0,0.15)] w-full p-6 relative">
             <h2 className="text-xl font-bold mb-4">Grupos do Usuário</h2>
 
             {carregando ? (

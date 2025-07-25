@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import FormUsuarios from "./FormUsuarios";
 import FormUsuarioPermissoes from "./FormUsuarioPermissoes";
+import FormUsuarioSistemas from "./FormUsuarioSistemas";
 import axios from "../../../api/axiosAuth";
 import API_URL from "../../../services/apiAuthUrl";
 
@@ -208,6 +209,48 @@ export default function UsuariosPage() {
         setExibindoFormularioPermissoes(false);
     };
     
+    
+    const [exibindoFormularioSistemas, setExibindoFormularioSistemas] = useState(false);
+    const [registroSistemas, setRegistroSistemas] = useState(null);
+
+    const handleIncluirSistemas = () => {
+        if (selectedIds.size !== 1) {
+            alert("Selecione exatamente 1 item para editar");
+            return;
+        }
+
+        const idParaEditar = [...selectedIds][0];
+        const registroSelecionado = dados.find((b) => b.id === idParaEditar);
+
+        setRegistroSistemas(registroSelecionado); 
+        setExibindoFormularioSistemas(true);
+    };
+
+    const salvarFormularioSistemas = async (registroSistemas) => {
+        setCarregando(true);
+        setErro(null);
+
+        try {
+            if (registroEditando) {
+                // PUT ou PATCH (edição)
+                const response = await axios.put(`/v1/system_users/${registro.id}`, registro);
+                buscarDados();
+            } 
+
+            setExibindoFormularioSistemas(false);
+            setRegistroSistemas(null);
+            setSelectedIds(new Set());
+        } catch (err) {
+            setErro(err.response?.data?.message || err.message || "Erro ao salvar o sistema");
+        } finally {
+            setCarregando(false);
+        }
+    };
+
+    const cancelarModalSistemas = () => {
+        setExibindoFormularioSistemas(false);
+    };
+    
 
     useEffect(() => {
         buscarDados();
@@ -271,6 +314,13 @@ export default function UsuariosPage() {
                     className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-sky-500 transition disabled:opacity-50"
                 >
                     Excluir
+                </button>
+                <button
+                    onClick={handleIncluirSistemas}
+                    disabled={selectedIds.size !== 1}
+                    className="bg-gray-700 text-white px-3 py-0.5 rounded hover:bg-sky-500 transition disabled:opacity-50"
+                >
+                    Sistemas
                 </button>
                 <button
                     onClick={handleIncluirPermissoes}
@@ -368,6 +418,13 @@ export default function UsuariosPage() {
                     onSalvar={salvarFormularioPermissoes}
                     onCancelar={cancelarModalPermissoes}
                     registro={registroPermissoes} // ← importante
+                />
+            )}
+            {exibindoFormularioSistemas && (
+                <FormUsuarioSistemas
+                    onSalvar={salvarFormularioSistemas}
+                    onCancelar={cancelarModalSistemas}
+                    registro={registroSistemas} // ← importante
                 />
             )}
         </div>
